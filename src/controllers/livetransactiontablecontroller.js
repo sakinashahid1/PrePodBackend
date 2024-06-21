@@ -146,7 +146,15 @@ async function searchTransactions(req, res) {
 
 async function getLatestTransactions(req, res) {
   try {
-    const transactions = await LiveTransactionTable.find().sort({ transactiondate: -1 }).limit(100); 
+
+    const {merchant} = req.query;
+
+    let query = {};
+    if (merchant) {
+      query.merchant = merchant;
+    }
+
+    const transactions = await LiveTransactionTable.find(query).sort({ transactiondate: -1 }).limit(100); 
 
     if (req && res) {
       res.json(transactions);

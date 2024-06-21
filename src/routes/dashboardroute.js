@@ -32,6 +32,14 @@ const handleDashboardRequest = (req, res, next) => {
       successlast6Months: Adminsuccesslast6Months,
       monthlyTransactionMetrics: AdminmonthlyTransactionMetrics,
     },
+    merchant: {
+      todaystats: AdminsuccessPercentageToday,
+      weeklystats: AdminweeklyStats,
+      cardcomparison: AdminweeklyCardComparison,
+      weeklyTop4Countries: AdminweeklyTop4Countries,
+      successlast6Months: Adminsuccesslast6Months,
+      monthlyTransactionMetrics: AdminmonthlyTransactionMetrics,
+    },
     user: {
       todaystats: DummysuccessPercentageToday,
       weeklystats: DummyweeklyStats,
