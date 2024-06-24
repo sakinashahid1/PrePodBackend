@@ -402,7 +402,7 @@ async function getCallback(req, res){
   try {
     const {code, status, message, Transaction_id}
      = req.body;
-     console.log('Callback received:', req.body);
+     console.log(req.body);
 
      // Send a response back to the payment service
      res.send('Callback received');
