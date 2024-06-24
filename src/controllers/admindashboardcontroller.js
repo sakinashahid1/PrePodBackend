@@ -4,9 +4,7 @@ const LiveTransactionTable = require("../models/LiveTransactionTable");
 const AdminsuccessPercentageToday = async (req, res) => {
   const { currency, merchant } = req.query;
   try {
-    console.log("In today stats");
     const currentDate = new Date();
-    console.log(currentDate);
 
     const fromDate = `${currentDate.getFullYear()}-${(
       "0" +
@@ -17,9 +15,6 @@ const AdminsuccessPercentageToday = async (req, res) => {
       "0" +
       (currentDate.getMonth() + 1)
     ).slice(-2)}-${("0" + currentDate.getDate()).slice(-2)} 23:59:59`;
-
-    console.log(fromDate);
-    console.log(toDate);
 
     const query = {
       transactiondate: { $gte: fromDate, $lte: toDate },
@@ -48,7 +43,7 @@ const AdminsuccessPercentageToday = async (req, res) => {
     const resultsForDay = await LiveTransactionTable.aggregate(
       aggregationPipeline
     );
-    console.log(resultsForDay);
+
     const successResult = resultsForDay.find(
       (result) => result._id === "Success"
     ) || { count: 0, totalAmount: 0 };
@@ -64,14 +59,11 @@ const AdminsuccessPercentageToday = async (req, res) => {
     const incompleteCount = incompleteResult.count;
 
     const successAmount = successResult.totalAmount;
-    console.log("successAmount ", successAmount);
 
     const totalTransactions = successCount + failedCount + incompleteCount;
-    console.log("successAmount ", successAmount);
 
     const successPercentage =
       totalTransactions === 0 ? 0 : (successCount / totalTransactions) * 100;
-    console.log("successAmount ", successAmount);
 
     res.status(200).json({
       successPercentage: successPercentage.toFixed(2),
@@ -270,9 +262,6 @@ const AdminweeklyCardComparison = async (req, res) => {
       (currentDate.getMonth() + 1)
     ).slice(-2)}-${("0" + currentDate.getDate()).slice(-2)} 23:59:59`;
 
-    console.log(formattedCurrentWeekStartDate);
-    console.log(formattedCurrentWeekEndDate);
-
     const formattedPreviousWeekStartDate = `${previousweekstartDate.getFullYear()}-${(
       "0" +
       (previousweekstartDate.getMonth() + 1)
@@ -282,9 +271,6 @@ const AdminweeklyCardComparison = async (req, res) => {
       "0" +
       (previousweekendDate.getMonth() + 1)
     ).slice(-2)}-${("0" + previousweekendDate.getDate()).slice(-2)} 23:59:59`;
-
-    console.log(formattedPreviousWeekStartDate);
-    console.log(formattedPreviousWeekEndDate);
 
     query = {
       transactiondate: {
@@ -310,7 +296,6 @@ const AdminweeklyCardComparison = async (req, res) => {
     const resultsForCurrent = await LiveTransactionTable.aggregate(
       aggregationPipeline
     );
-    console.log(resultsForCurrent);
     const CurrentvisaResult = resultsForCurrent.find(
       (result) => result._id === "Visa"
     );
@@ -349,7 +334,6 @@ const AdminweeklyCardComparison = async (req, res) => {
     const resultsForPrevious = await LiveTransactionTable.aggregate(
       aggregationPipeline
     );
-    console.log(resultsForPrevious);
 
     const PreviousvisaResult = resultsForPrevious.find(
       (result) => result._id === "Visa"
@@ -368,9 +352,7 @@ const AdminweeklyCardComparison = async (req, res) => {
     const visaDifference = parseFloat(
       (currentWeekVisaAmount - PreviousWeekVisaAmount).toFixed(3)
     );
-    console.log(currentWeekVisaAmount);
-    console.log(PreviousWeekVisaAmount);
-    console.log(visaDifference);
+
     const mastercardDifference = parseFloat(
       (currentWeekMastercardAmount - PreviousWeekMastercardAmount).toFixed(3)
     );
@@ -404,9 +386,6 @@ const AdminweeklyTop4Countries = async (req, res) => {
       "0" +
       (currentDate.getMonth() + 1)
     ).slice(-2)}-${("0" + currentDate.getDate()).slice(-2)} 23:59:59`;
-
-    console.log(formattedCurrentWeekStartDate);
-    console.log(formattedCurrentWeekEndDate);
 
     const aggregationPipeline = [
       {
@@ -467,8 +446,6 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
       (currentDate.getMonth() + 1)
     ).slice(-2)}-${("0" + currentDate.getDate()).slice(-2)} 23:59:59`;
 
-    console.log(formattedFromDate);
-    console.log(formattedToDate);
 
     let pipeline = [
       {
@@ -505,7 +482,6 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
     ];
 
     const result = await LiveTransactionTable.aggregate(pipeline);
-    console.log(result);
 
     const {
       numTransactions,
@@ -520,7 +496,6 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
     if (sixtyDaysAgo.getMonth() === 11 && thirtyDaysAgo.getMonth() === 0) {
       sixtyDaysAgo.setFullYear(thirtyDaysAgo.getFullYear() - 1);
     }
-    console.log(sixtyDaysAgo);
 
     formattedFromDate = `${sixtyDaysAgo.getFullYear()}-${(
       "0" +
@@ -531,8 +506,7 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
       "0" +
       (thirtyDaysAgo.getMonth() + 1)
     ).slice(-2)}-${("0" + thirtyDaysAgo.getDate()).slice(-2)} 23:59:59`;
-    console.log(formattedFromDate);
-    console.log(formattedToDate);
+
     pipeline = [
       {
         $match: {
@@ -557,14 +531,12 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
     ];
 
     const previousresult = await LiveTransactionTable.aggregate(pipeline);
-    console.log(previousresult);
 
     const numSuccessfulTransactionsPreviousMonth =
       previousresult.length > 0
         ? previousresult[0].numSuccessfulTransactionsPreviousMonth
         : 0;
 
-    console.log(numSuccessfulTransactionsPreviousMonth);
 
     const growthPercentage =
       numSuccessfulTransactionsPreviousMonth === 0
@@ -594,7 +566,7 @@ const Adminsuccesslast6Months = async (req, res) => {
   const { currency, merchant } = req.query;
   try {
     const currentDate = new Date();
-    console.log(currentDate);
+
     let startMonth = currentDate.getMonth() - 5;
     let startYear = currentDate.getFullYear();
     if (startMonth < 0) {
@@ -620,8 +592,6 @@ const Adminsuccesslast6Months = async (req, res) => {
       59,
       59
     ).toISOString();
-    console.log(MonthfromDate);
-    console.log(MonthtoDate);
 
     const pipeline = [
       {
@@ -655,7 +625,7 @@ const Adminsuccesslast6Months = async (req, res) => {
     ];
 
     const result = await LiveTransactionTable.aggregate(pipeline);
-    console.log(result);
+
     const salesByMonth = {};
     let totalSales = 0;
 

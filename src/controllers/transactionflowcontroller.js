@@ -97,13 +97,10 @@ async function initiateTransaction(req, res) {
       backURL,
       requestMode,
     } = req.body;
-    console.log("Request received");
 
     const maskedcardno = mask(cardnumber);
-    console.log("Card masked");
 
     const token = generateToken();
-    console.log("Token", token);
 
     const txnId = generateUniqueTransactionId();
     const [cardtype, country] = await binAPI(maskedcardno.slice(0, 6));
@@ -131,10 +128,6 @@ async function initiateTransaction(req, res) {
 
     await newTransaction.save();
 
-    console.log("Record saved");
-
-    console.log("Response sent");
-
     // Perform the remaining operations asynchronously
     const response = await processTransaction(
       txnId,
@@ -151,9 +144,9 @@ async function initiateTransaction(req, res) {
       requestMode
     );
 
-    //Redirect to callback url
-    // const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
-    // res.status(200).json( {redirectUrl});
+    // Redirect to callback url
+    const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
+    res.status(200).json( {redirectUrl});
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ error: "Something wrong happened" });
@@ -213,7 +206,6 @@ async function processTransaction(
     // }
 
     await TempTransactionTable.updateOne({ txnId }, { $set: update });
-    console.log("Temp Record updated");
 
     // getCallbackfromCentpays(update.token)
     
@@ -299,7 +291,6 @@ async function getCallbackfromCentpays(token, retries = 3, timeout = 5000) {
 
 
 async function Bank(dataforBank) {
-  console.log("In bank");
   try {
     // const response = await fetch("http://54.159.39.148/", {
 
@@ -338,16 +329,13 @@ function mask(cardno) {
 }
 
 function generateToken() {
-  console.log("entered");
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-";
   let token = "";
-  console.log(token);
   for (let i = 0; i < 16; i++) {
     const randomIndex = Math.floor(Math.random() * characters.length);
     token += characters.charAt(randomIndex);
   }
-  console.log(token);
   return token;
 }
 
@@ -360,7 +348,6 @@ function generateUniqueTransactionId() {
 }
 
 async function binAPI(bin) {
-  console.log("bin", bin);
   try {
     const response = await fetch(`https://data.handyapi.com/bin/${bin}`);
     if (!response.ok) {
