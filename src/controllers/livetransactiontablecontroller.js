@@ -114,7 +114,7 @@ async function getLivedata(req, res) {
 }
 
 const interval = 60000; 
-// setInterval(getLivedata, interval);
+setInterval(getLivedata, interval);
 
 async function searchTransactions(req, res) {
   try {
