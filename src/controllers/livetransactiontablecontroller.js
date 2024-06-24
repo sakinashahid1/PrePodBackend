@@ -114,7 +114,7 @@ async function getLivedata(req, res) {
 }
 
 const interval = 60000; 
-setInterval(getLivedata, interval);
+// setInterval(getLivedata, interval);
 
 async function searchTransactions(req, res) {
   try {
@@ -148,14 +148,11 @@ async function getLatestTransactions(req, res) {
   try {
 
     const {merchant} = req.query;
-
     let query = {};
     if (merchant) {
       query.merchant = merchant;
     }
-
     const transactions = await LiveTransactionTable.find(query).sort({ transactiondate: -1 }).limit(100); 
-
     if (req && res) {
       res.json(transactions);
     }
