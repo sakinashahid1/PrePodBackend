@@ -404,7 +404,7 @@ async function getCallback(req, res){
      = req.body;
 
      // Send a response back to the payment service
-     res.send(req.body);
+     res.json({code,status,message,Transaction_id});
   }catch(error){
    console.log(error)
   }
