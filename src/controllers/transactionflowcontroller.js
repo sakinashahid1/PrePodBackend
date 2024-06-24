@@ -97,7 +97,7 @@ async function initiateTransaction(req, res) {
       backURL,
       requestMode,
     } = req.body;
-
+console.log("Back url", backURL)
     const maskedcardno = mask(cardnumber);
 
     const token = generateToken();
