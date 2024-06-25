@@ -7,6 +7,7 @@ const {
     listSettlement,
     getCompanyList,
     getCurrenciesOfCompany,
+    companyCurrency,
     countriesList,
     midList,
     acquirerList
@@ -22,6 +23,6 @@ router.get("/approvalratio", verifyToken, approvalRatio);
 router.get("/listofcountries", verifyToken, countriesList);
 router.get("/listofmids", verifyToken, midList);
 router.get("/acquirerlist", verifyToken, acquirerList);
-
+router.get("/uniquecurrencies", verifyToken, companyCurrency);
 
 module.exports = router;

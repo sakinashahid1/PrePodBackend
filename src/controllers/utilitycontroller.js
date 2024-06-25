@@ -215,6 +215,25 @@ async function getCurrenciesOfCompany(req, res) {
   }
 }
 
+async function companyCurrency(req, res) {
+  try {
+    const { merchant } = req.query;
+    
+    if (merchant) {
+      const currencies = await LiveTransactionTable.distinct('currency', { merchant });
+      
+      res.status(200).json({ merchant, currencies });
+    } else {
+      const merchants = await LiveTransactionTable.distinct('currency');
+      
+      res.status(200).json({ merchants });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+
 async function acquirerList(req, res) {
   try {
     const acquirerNames = await Acquirer.distinct("acquirer_name");
@@ -233,4 +252,4 @@ module.exports = {
   listSettlement,
   getCompanyList,
   getCurrenciesOfCompany,
-  acquirerList}
+  acquirerList, companyCurrency}
