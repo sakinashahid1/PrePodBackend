@@ -34,7 +34,6 @@ app.get("/", (req, res) => {
 
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
 
 app.use("/", ClientRoutes);
 app.use("/", UserRoutes);
