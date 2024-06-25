@@ -146,6 +146,8 @@ async function initiateTransaction(req, res) {
     // Redirect to token url
     const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
     res.status(200).json( {redirectUrl});
+    const result = getCallbackfromCentpays(response.token);
+    console.log("resule",result)
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ error: "Something wrong happened" });
@@ -247,46 +249,15 @@ async function processTransaction(
   }
 }
 
-async function getCallbackfromCentpays(token, retries = 3, timeout = 5000) {
-  const controller = new AbortController();
-  const signal = controller.signal;
-
-  const fetchWithTimeout = (url, options, timeout) =>
-    new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        controller.abort();
-        reject(new Error("Request Timeout"));
-      }, timeout);
-
-      fetch(url, { ...options, signal })
-        .then(response => {
-          clearTimeout(timer);
-          if (!response.ok) {
-            reject(new Error(`Network response was not ok: ${response.statusText}`));
-          } else {
-            resolve(response.json());
-          }
-        })
-        .catch(err => {
-          clearTimeout(timer);
-          reject(err);
-        });
-    });
-
-  for (let attempt = 1; attempt <= retries; attempt++) {
+async function getCallbackfromCentpays(token) {
     try {
       const data = await fetchWithTimeout(`https://centpays.com/v2/ini_payment/${token}`, {}, timeout);
       return data;
     } catch (error) {
-      if (attempt < retries) {
-        console.log(`Attempt ${attempt} failed, retrying...`);
-      } else {
         console.error("There was a problem with the fetch operation from ini_payment:", error);
-        throw error;
       }
-    }
   }
-}
+
 
 
 async function Bank(dataforBank) {
@@ -399,9 +370,9 @@ async function getTransaction(req, res) {
 
 async function getCallback(req, res){
   try {
-    const request = req;
-console.log(request)
-     res.send("Callback Received");
+    const request = req.body;
+    console.log(request)
+    res.send("Callback Received");
   }catch(error){
    console.log(error)
   }
