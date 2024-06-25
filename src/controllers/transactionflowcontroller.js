@@ -398,13 +398,13 @@ async function getTransaction(req, res) {
 }
 
 async function getCallback(req, res){
-//   try {
-//     const {code, status, message, Transaction_id} = req.body;
-// console.log(code, status, message, Transaction_id)
-//      res.send(code,status,message,Transaction_id);
-//   }catch(error){
-//    console.log(error)
-//   }
+  try {
+    const request = req;
+console.log(request)
+     res.send("Callback Received");
+  }catch(error){
+   console.log(error)
+  }
 }
 
 module.exports = { initiateTransaction, getInfoOfTxn, getTransaction, getCallback };
