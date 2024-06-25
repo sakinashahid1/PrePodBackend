@@ -146,8 +146,6 @@ async function initiateTransaction(req, res) {
     // Redirect to token url
     const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
     res.status(200).json( {redirectUrl});
-    const result = getCallbackfromCentpays(response.token);
-    console.log("resule",result)
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ error: "Something wrong happened" });
@@ -371,8 +369,8 @@ async function getTransaction(req, res) {
 async function getCallback(req, res){
   try {
     const request = req.body;
-    console.log(request)
-    res.send("Callback Received");
+    console.log("request",request)
+    res.send(request);
   }catch(error){
    console.log(error)
   }
