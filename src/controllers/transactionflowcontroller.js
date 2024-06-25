@@ -143,7 +143,7 @@ async function initiateTransaction(req, res) {
       requestMode
     );
 
-    // Redirect to callback url
+    // Redirect to token url
     const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
     res.status(200).json( {redirectUrl});
   } catch (error) {
@@ -398,14 +398,13 @@ async function getTransaction(req, res) {
 }
 
 async function getCallback(req, res){
-  try {
-    const {code, status, message, Transaction_id} = req.body;
-console.log(code, status, message, Transaction_id)
-     // Send a response back to the payment service
-     res.send(code,status,message,Transaction_id);
-  }catch(error){
-   console.log(error)
-  }
+//   try {
+//     const {code, status, message, Transaction_id} = req.body;
+// console.log(code, status, message, Transaction_id)
+//      res.send(code,status,message,Transaction_id);
+//   }catch(error){
+//    console.log(error)
+//   }
 }
 
 module.exports = { initiateTransaction, getInfoOfTxn, getTransaction, getCallback };
