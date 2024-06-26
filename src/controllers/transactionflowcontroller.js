@@ -312,15 +312,12 @@ async function getInfoOfTxn(req, res) {
 
 async function getTransaction(req, res) {
   try {
-    const { transactionID } = req.body;
-    const transaction = await TransactionFlow.findOne({
-      merchantTxnID: transactionID,
+    const { orderNo } = req.query;
+    const transaction = await OrderTransactionTable.findOne({
+      orderNo,
     });
 
     res.status(200).json({
-      code: "200",
-      status: "OK",
-      message: "Transaction Processed Successfully",
       data: transaction,
     });
   } catch (error) {

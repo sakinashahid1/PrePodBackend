@@ -11,9 +11,6 @@ const ApprovalRatioChart = async (req, res) => {
     return res.status(400).send({ error: 'startDate, endDate, and interval query parameters are required' });
   }
 
-  console.log(startDate);
-  console.log(endDate);
-
   startDate = startDate.split("T")[0] + " 00:00:00"
   endDate = endDate.split("T")[0] + " 23:59:59"
 

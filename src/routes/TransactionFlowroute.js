@@ -8,7 +8,7 @@ const upload = multer();
 
 router.post("/paymentlink", initiateTransaction);
 router.get("/transactionflow/info_transaction", getInfoOfTxn);
-router.post("/transactionflow/get_transaction", getTransaction);
+router.get("/transactionflow/get_transaction", getTransaction);
 router.post("/callbackurl", upload.none(), getCallback);
 
 module.exports = router;

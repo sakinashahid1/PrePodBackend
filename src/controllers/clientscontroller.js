@@ -91,7 +91,6 @@ async function getClient(req, res) {
 async function viewClient(req, res) {
   try {
     const company_name = req.query.company_name;
-    console.log(company_name)
     const client = await Client.findOne({company_name: company_name});
     res.status(200).json(client);
   } catch (error) {
