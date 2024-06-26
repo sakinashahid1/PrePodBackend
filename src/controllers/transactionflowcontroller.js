@@ -331,11 +331,12 @@ async function getTransaction(req, res) {
 async function getCallback(req, res){
   try {
     const callbackData = req.body; 
+    console.log(callbackData)
     update = {
       status: callbackData.status,
       message: callbackData.message,
     };
-const txnId = callbackData["Transaction_Id"]
+const txnId = callbackData["Transaction_id"]
 console.log("callback txn id",txnId)
     await TempTransactionTable.updateOne({ txnId }, { $set: update });
 
