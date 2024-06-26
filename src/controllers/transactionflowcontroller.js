@@ -128,7 +128,7 @@ async function initiateTransaction(req, res) {
     });
 
     await newTransaction.save();
-
+    const paylinkup_backURL = "https://www.paylinkup.online/callbackurl"
     // Perform the remaining operations asynchronously
     const response = await processTransaction(
       txnId,
@@ -141,7 +141,7 @@ async function initiateTransaction(req, res) {
       cardnumber,
       cardExpire,
       cardCVV,
-      backURL,
+      paylinkup_backURL,
       requestMode
     );
 
@@ -359,14 +359,33 @@ async function getTransaction(req, res) {
 
 async function getCallback(req, res){
   try {
-    const callbackData = req.body;
-
-    console.log('Received callback data:', callbackData);
-
-    // if (wsConnection) {
-    //     wsConnection.send(JSON.stringify(callbackData));
-    // }
-    // Respond to the callback sender
+    const callbackData = req.body; 
+   
+    try {
+      const response = await fetch("https://centpays.com/v2/get_transaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key":
+            "live_$2y$10$MO5xnO7AVcwTKmovvi6fEuTDdlaT/CRpCgdK0nTjuNqZ1xWiZrmL6",
+          "api-secret":
+            "live_$2y$10$fNghQ0yJycZCeDinrWRG/.1rHN74XCM3lLpd2fWfrCFkwG.cEz.3W",
+        },
+        body: JSON.stringify({transaction_id:callbackData["Transaction_id"]}),
+      });
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      console.log("get txn api res",data);
+    } catch (error) {
+      console.error(
+        "There was a problem with the fetch operation of Bank:",
+        error
+      );
+      throw error;
+    }
     res.redirect(`https://www.centpays.online/acquirertestingenv`)
   }catch(error){
    console.log(error)
