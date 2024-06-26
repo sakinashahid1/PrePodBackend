@@ -367,7 +367,7 @@ async function getCallback(req, res){
     //     wsConnection.send(JSON.stringify(callbackData));
     // }
     // Respond to the callback sender
-    res.status(200).json({ message: 'Callback received' });
+    res.redirect(`https://www.centpays.online/acquirertestingenv`)
   }catch(error){
    console.log(error)
   }
