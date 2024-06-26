@@ -71,7 +71,7 @@ app.use("/", UtilityRoutes)
 //     });
 // });
 
-module.exports = { server, wsConnection };
+// module.exports = { server, wsConnection };
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
