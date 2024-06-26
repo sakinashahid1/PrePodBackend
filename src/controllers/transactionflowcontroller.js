@@ -336,12 +336,13 @@ async function getCallback(req, res){
       message: callbackData.message,
     };
 const txnId = callbackData["Transaction_Id"]
+console.log("callback txn id",txnId)
     await TempTransactionTable.updateOne({ txnId }, { $set: update });
 
      const temp_transaction = await TempTransactionTable.findOne({
       txnId
     });
-
+console.log("temp txn id",temp_transaction)
     const order_transaction = new OrderTransactionTable({
       merchantID: temp_transaction.merchantID,
       merchantTxnID: temp_transaction.merchantTxnID,
