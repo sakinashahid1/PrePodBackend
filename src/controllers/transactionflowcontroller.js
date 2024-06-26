@@ -145,7 +145,7 @@ async function initiateTransaction(req, res) {
 
     // Redirect to token url
     const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
-    res.status(200).json( {redirectUrl});
+    res.redirect(redirectUrl);
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ error: "Something wrong happened" });
@@ -246,17 +246,6 @@ async function processTransaction(
     console.error("Error processing transaction:", error);
   }
 }
-
-async function getCallbackfromCentpays(token) {
-    try {
-      const data = await fetchWithTimeout(`https://centpays.com/v2/ini_payment/${token}`, {}, timeout);
-      return data;
-    } catch (error) {
-        console.error("There was a problem with the fetch operation from ini_payment:", error);
-      }
-  }
-
-
 
 async function Bank(dataforBank) {
   try {
@@ -370,7 +359,7 @@ async function getCallback(req, res){
   try {
     const request = req.body;
     console.log("request",request)
-    res.send(request);
+    res.json(request);
   }catch(error){
    console.log(error)
   }
