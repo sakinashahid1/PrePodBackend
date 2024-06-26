@@ -2,6 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const http = require('http');
+const WebSocket = require('ws');
+
 const ClientRoutes = require("./src/routes/clientroute");
 const UserRoutes = require("./src/routes/userroute");
 const SessionRoutes = require("./src/routes/sessionsroute");
@@ -56,6 +59,20 @@ app.use("/", LiveTransactionData);
 app.use("/", NewRoutes);
 app.use("/", TransactionFlowRoutes);
 app.use("/", UtilityRoutes)
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+let wsConnection = null;
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+    wsConnection = ws;
+    ws.on('message', (message) => {
+        console.log('received: %s', message);
+    });
+});
+
+module.exports = { server, wsConnection };
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
