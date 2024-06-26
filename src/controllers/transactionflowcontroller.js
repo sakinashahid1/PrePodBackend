@@ -213,36 +213,7 @@ async function processTransaction(
     // const updatedTxnId = update.txnId;
     // console.log("Txnid", updatedTxnId);
 
-    // const temp_transaction = await TempTransactionTable.findOne({
-    //   txnId
-    // });
-
-    // console.log("temp_transaction", temp_transaction);
-
-    // const order_transaction = new OrderTransactionTable({
-    //   merchantID: temp_transaction.merchantID,
-    //   merchantTxnID: temp_transaction.merchantTxnID,
-    //   name: temp_transaction.name,
-    //   email: temp_transaction.email,
-    //   amount: temp_transaction.amount,
-    //   currency: temp_transaction.currency,
-    //   cardnumber: temp_transaction.cardnumber,
-    //   cardExpire: temp_transaction.cardExpire,
-    //   cardCVV: temp_transaction.cardCVV,
-    //   transactiondate: temp_transaction.transactiondate,
-    //   country: temp_transaction.country,
-    //   cardtype: temp_transaction.cardtype,
-    //   txnId: temp_transaction.txnId,
-    //   token: temp_transaction.token,
-    //   status: temp_transaction.status,
-    //   message: temp_transaction.message,
-    // });
-
-    // await order_transaction.save();
-
-    // console.log("Order Record saved");
-
-    // await TempTransactionTable.deleteOne({ txnId });
+   
     return responsefromBank;
   } catch (error) {
     console.error("Error processing transaction:", error);
@@ -360,33 +331,47 @@ async function getTransaction(req, res) {
 async function getCallback(req, res){
   try {
     const callbackData = req.body; 
-   
-    try {
-      const response = await fetch("https://centpays.com/v2/get_transaction", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key":
-            "live_$2y$10$MO5xnO7AVcwTKmovvi6fEuTDdlaT/CRpCgdK0nTjuNqZ1xWiZrmL6",
-          "api-secret":
-            "live_$2y$10$fNghQ0yJycZCeDinrWRG/.1rHN74XCM3lLpd2fWfrCFkwG.cEz.3W",
-        },
-        body: JSON.stringify({transaction_id:callbackData["Transaction_id"]}),
-      });
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-  
-      const data = await response.json();
-      console.log("get txn api res",data);
-    } catch (error) {
-      console.error(
-        "There was a problem with the fetch operation of Bank:",
-        error
-      );
-      throw error;
-    }
-    res.redirect(`https://www.centpays.online/acquirertestingenv`)
+    update = {
+      status: callbackData.status,
+      message: callbackData.message,
+    };
+const txnId = callbackData["Transaction_Id"]
+    await TempTransactionTable.updateOne({ txnId }, { $set: update });
+
+     const temp_transaction = await TempTransactionTable.findOne({
+      txnId
+    });
+
+    const order_transaction = new OrderTransactionTable({
+      merchantID: temp_transaction.merchantID,
+      merchantTxnID: temp_transaction.merchantTxnID,
+      orderNo: temp_transaction.orderNo,
+      name: temp_transaction.name,
+      email: temp_transaction.email,
+      phone: temp_transaction.phone,
+      amount: temp_transaction.amount,
+      currency: temp_transaction.currency,
+      cardnumber: temp_transaction.cardnumber,
+      cardExpire: temp_transaction.cardExpire,
+      cardCVV: temp_transaction.cardCVV,
+      backURL: temp_transaction.backURL,
+      requestMode: temp_transaction.requestMode,
+      transactiondate: temp_transaction.transactiondate,
+      country: temp_transaction.country,
+      cardtype: temp_transaction.cardtype,
+      txnId: temp_transaction.txnId,
+      token: temp_transaction.token,
+      status: temp_transaction.status,
+      message: temp_transaction.message,
+    });
+
+    await order_transaction.save();
+
+    console.log("Order Record saved");
+
+    await TempTransactionTable.deleteOne({ txnId });
+
+    res.redirect(`${temp_transaction.backURL}/${temp_transaction.orderNo}`)
   }catch(error){
    console.log(error)
   }
