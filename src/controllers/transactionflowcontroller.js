@@ -1,4 +1,4 @@
-const { wsConnection } = require('../../app');
+// const { wsConnection } = require('../../app');
 
 const TransactionFlow = require("../models/TransactionFlow");
 const TempTransactionTable = require("../models/TempTransactionTable");
@@ -363,9 +363,9 @@ async function getCallback(req, res){
 
     console.log('Received callback data:', callbackData);
 
-    if (wsConnection) {
-        wsConnection.send(JSON.stringify(callbackData));
-    }
+    // if (wsConnection) {
+    //     wsConnection.send(JSON.stringify(callbackData));
+    // }
     // Respond to the callback sender
     res.status(200).json({ message: 'Callback received' });
   }catch(error){
