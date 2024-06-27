@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
-const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const clientSchema = new mongoose.Schema({
+  client_id: { type: Number },
   company_name: { type: String, },
   username: { type: String },
   email: { type: String },
@@ -40,9 +40,9 @@ const clientSchema = new mongoose.Schema({
       },
     },
   },
+  signupKey: { type: String },
+  signupKeyCounter: { type: Number, default: 0 }
 });
-
-clientSchema.plugin(AutoIncrement, { inc_field: "client_id", start_seq: 24 });
 
 const Client = mongoose.model("Client", clientSchema);
 

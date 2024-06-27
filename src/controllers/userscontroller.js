@@ -13,6 +13,7 @@ async function signup(req, res) {
       password,
       confirm_password,
       company_name,
+      signupKey
     } = req.body;
 
     if (password !== confirm_password) {
@@ -20,10 +21,16 @@ async function signup(req, res) {
         .status(400)
         .json({ message: "Password and confirm password do not match" });
     }
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user
+    const client = await Client.findOne({ company_name, signupKey: signupKey });
+    if (!client) {
+      return res.status(400).json({ message: "Invalid signup key" });
+    }
+
+    if (client.signupKeyCounter > 0) {
+      return res.status(400).json({ message: "Signup key has already been used" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       name,
       email,
@@ -34,8 +41,9 @@ async function signup(req, res) {
       company_name,
     });
 
-    // Save the user to the database
     await user.save();
+
+    await Client.updateOne({ _id: client._id }, { $inc: { signupKeyCounter: 1 } });
 
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {

@@ -1,5 +1,6 @@
 require("../config/database");
 const Client = require("../models/Client");
+const jwt = require("jsonwebtoken");
 
 async function createClient(req, res) {
   try {
@@ -35,7 +36,16 @@ async function createClient(req, res) {
       currency,
     } = req.body;
 
+    const client_id = await calculateClientId();
+
+    const signupKey = jwt.sign(
+      { clientId: Client.client_id, companyName: Client.company_name },
+      process.env.SECRET_KEY
+    );
+
     const client = new Client({
+      client_id, 
+      signupKey,
       company_name,
       username,
       email,
@@ -76,6 +86,14 @@ async function createClient(req, res) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+}
+
+async function calculateClientId() {
+  const lastClient = await Client.findOne().sort({ client_id: -1 }).exec();
+  if (lastClient && lastClient.client_id) {
+    return lastClient.client_id + 1;
+  }
+  return 1;
 }
 
 async function getClient(req, res) {
