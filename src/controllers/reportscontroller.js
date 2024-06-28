@@ -113,94 +113,70 @@ async function searchTransactionReport(req, res) {
   }
 }
 
-// async function searchTransactionReport(req, res) {
-//   try {
-//     const {
-//       searchIds,
-//       status,
-//       merchant,
-//       fromDate,
-//       toDate,
-//       mid,
-//       paymentgateway,
-//       currency,
-//       country,
-//       cardtype,
-//       cardnumber,
-//     } = req.body;
+function adjustTimeToIST(time, offset) {
+  const date = new Date(time);
+  console.log(date)
+  const ISTOffset = 5.5 * 60; 
+  const targetOffset = offset * 60; 
 
-//     const filters = {};
+  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset) * 60000);
+  console.log(adjustedDate)
+  return `${adjustedDate.getFullYear()}-${(
+      "0" +
+      (adjustedDate.getMonth() + 1)
+    ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${("0" + adjustedDate.getHours()).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${("0" + adjustedDate.getSeconds()).slice(-2)}`;;
+}
 
-//     if (fromDate && toDate) {
-//       filters.transactiondate = {
-//         $gte: fromDate,
-//         $lte: toDate,
-//       };
-//     }
+async function compareReport(req, res) {
+  try {
+    const {
+      fromDate,
+      toDate,
+      paymentgateway,
+    } = req.body;
+console.table({fromDate,
+  toDate,
+  paymentgateway})
+    const timezoneOffsets = {
+      "MilkyPay" : 4
+    }
 
-//     if (status) {
-//       filters.Status = { $regex: new RegExp(`^${status}$`, 'i') };
-//     }
+    const offset = timezoneOffsets[paymentgateway];
+    console.log(offset)
 
-//     if (merchant) {
-//       filters.merchant = { $regex: new RegExp(`^${merchant}$`, 'i') };
-//     }
+    const fromTime = new Date(`${fromDate}T00:00:00.000+05:30`);
+    const toTime = new Date(`${toDate}T23:59:59.999+05:30`);
 
-//     if (mid) {
-//       filters.mid = { $regex: new RegExp(`^${mid}$`, 'i') };
-//     }
+    const adjustedFromTime = adjustTimeToIST(fromTime, offset);
+    const adjustedToTime = adjustTimeToIST(toTime, offset);
+    console.table({adjustedFromTime,adjustedToTime})
+   
+    const pipeline = [];
+      pipeline.push({
+        $match: {
+          transactiondate: {
+            $gte: adjustedFromTime,
+            $lte: adjustedToTime,
+          },
+          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
+        },
+      },
+      {
+        $project: {
+          txnid: 1,
+          Status: 1,
+          amount: 1,
+          _id: 0 // Exclude the _id field
+        }
+      });
 
-//     if (paymentgateway) {
-//       filters.paymentgateway = { $regex: new RegExp(`^${paymentgateway}$`, 'i') };
-//     }
-
-//     if (currency) {
-//       filters.currency = { $regex: new RegExp(`^${currency}$`, 'i') };
-//     }
-
-//     if (country) {
-//       filters.country = { $regex: new RegExp(`^${country}$`, 'i') };
-//     }
-
-//     if (cardtype) {
-//       filters.cardtype = { $regex: new RegExp(`^${cardtype}$`, 'i') };
-//     }
-
-//     if (cardnumber) {
-//       filters.cardnumber = cardnumber;
-//     }
-
-//     if (searchIds) {
-//       filters.$or = [
-//         { txnid: { $in: searchIds.split(" ") } },
-//         { merchantTxnId: { $in: searchIds.split(" ") } },
-//       ];
-//     }
-
-//     const totalCount = await LiveTransactionTable.countDocuments(filters);
-
-//     let pageSize = 50;
-
-//     const page = req.query.page ? parseInt(req.query.page) : 1;
-
-//     if (page < 1) {
-//       return res.status(400).json({ error: "Page number must be a positive integer" });
-//     }
-
-//     const skipCount = (page - 1) * pageSize;
-
-//     const transactions = await LiveTransactionTable.find(filters)
-//       .skip(skipCount)
-//       .limit(pageSize);
-
-//     const totalPages = Math.ceil(totalCount / pageSize);
-
-//     res.status(200).json({ transactions, totalCount, currentPage: page, totalPages });
-//   } catch (error) {
-//     console.error("Error fetching transactions:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// }
+    const transactions = await LiveTransactionTable.aggregate(pipeline);
+    res.json(transactions);
+  } catch (error) {
+    console.error("Error searching transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
 
 async function quickSearch(req, res) {
   const { id } = req.query;
@@ -225,6 +201,7 @@ async function quickSearch(req, res) {
 
 module.exports = {
   searchTransactionReport,
+  compareReport,
   quickSearch,
 };
 
