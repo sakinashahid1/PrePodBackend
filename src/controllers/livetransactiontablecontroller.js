@@ -164,4 +164,29 @@ async function getLatestTransactions(req, res) {
   }
 }
 
-module.exports = { getLivedata, searchTransactions, getLatestTransactions };
+async function bankSettled(req, res) {
+  const { txnids } = req.body;
+  const txnidArray = txnids.split(/\s+/).map(txnid => txnid.trim()).filter(txnid => txnid);
+
+  if (txnidArray.length === 0) {
+    return res.status(400).json({ message: "Invalid input. Please provide at least one txnid." });
+  }
+
+  try {
+    const result = await LiveTransactionTable.updateMany(
+      { txnid: { $in: txnidArray } },
+      { $set: { isBankSettled: 1 } }
+    );
+
+    res.status(200).json({
+      message: "Transactions updated successfully",
+      transactionsMatched: result.matchedCount,
+      transactionsModified: result.modifiedCount
+    });
+  } catch (error) {
+    console.error("Error updating transactions:", error);
+    res.status(500).json({ message: "An error occurred while updating transactions" });
+  }
+}
+
+module.exports = { getLivedata, searchTransactions, getLatestTransactions, bankSettled };
