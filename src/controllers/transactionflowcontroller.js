@@ -379,46 +379,13 @@ async function getWebhook(req, res) {
   try {
     const webhookData = req.body;
     console.log(webhookData);
-    // update = {
-    //   status: webhookData.status,
-    //   message: webhookData.message,
-    // };
-    // const txnId = webhookData["Transaction_id"];
-    // console.log("callback txn id", txnId);
-    // await TempTransactionTable.updateOne({ txnId }, { $set: update });
-
-    // const temp_transaction = await TempTransactionTable.findOne({
-    //   txnId,
-    // });
-    // console.log("temp txn id", temp_transaction);
-    // const order_transaction = new OrderTransactionTable({
-    //   merchantID: temp_transaction.merchantID,
-    //   merchantTxnID: temp_transaction.merchantTxnID,
-    //   orderNo: temp_transaction.orderNo,
-    //   name: temp_transaction.name,
-    //   email: temp_transaction.email,
-    //   phone: temp_transaction.phone,
-    //   amount: temp_transaction.amount,
-    //   currency: temp_transaction.currency,
-    //   cardnumber: temp_transaction.cardnumber,
-    //   cardExpire: temp_transaction.cardExpire,
-    //   cardCVV: temp_transaction.cardCVV,
-    //   backURL: temp_transaction.backURL,
-    //   requestMode: temp_transaction.requestMode,
-    //   transactiondate: temp_transaction.transactiondate,
-    //   country: temp_transaction.country,
-    //   cardtype: temp_transaction.cardtype,
-    //   txnId: temp_transaction.txnId,
-    //   token: temp_transaction.token,
-    //   status: temp_transaction.status,
-    //   message: temp_transaction.message,
-    // });
-
-    // await order_transaction.save();
-
-    // console.log("Order Record saved");
-
-    // await TempTransactionTable.deleteOne({ txnId });
+    update = {
+      status: webhookData.status,
+      message: webhookData.message,
+    };
+    const txnId = webhookData["transaction_id"];
+    
+    await OrderTransactionTable.updateOne({ txnId }, { $set: update });
 
     res.status(200).json({message:"Webhook Received"});
   } catch (error) {

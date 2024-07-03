@@ -1,5 +1,5 @@
 require("../config/database");
-const LiveTransactionTable = require("../models/LiveTransactionTable")
+const LiveTransactionTable = require("../models/LiveTransactionTable");
 
 async function searchTransactionReport(req, res) {
   try {
@@ -23,8 +23,8 @@ async function searchTransactionReport(req, res) {
       pipeline.push({
         $match: {
           transactiondate: {
-            $gte: fromDate.replace("T"," "),
-            $lte: toDate.replace("T"," "),
+            $gte: fromDate.replace("T", " "),
+            $lte: toDate.replace("T", " "),
           },
         },
       });
@@ -33,7 +33,7 @@ async function searchTransactionReport(req, res) {
     if (status) {
       pipeline.push({
         $match: {
-          Status: { $regex: new RegExp(`^${status}$`, 'i') },
+          Status: { $regex: new RegExp(`^${status}$`, "i") },
         },
       });
     }
@@ -41,7 +41,7 @@ async function searchTransactionReport(req, res) {
     if (merchant) {
       pipeline.push({
         $match: {
-          merchant: { $regex: new RegExp(`^${merchant}$`, 'i') },
+          merchant: { $regex: new RegExp(`^${merchant}$`, "i") },
         },
       });
     }
@@ -49,7 +49,7 @@ async function searchTransactionReport(req, res) {
     if (mid) {
       pipeline.push({
         $match: {
-          mid: { $regex: new RegExp(`^${mid}$`, 'i') },
+          mid: { $regex: new RegExp(`^${mid}$`, "i") },
         },
       });
     }
@@ -57,7 +57,7 @@ async function searchTransactionReport(req, res) {
     if (paymentgateway) {
       pipeline.push({
         $match: {
-          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
+          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, "i") },
         },
       });
     }
@@ -65,7 +65,7 @@ async function searchTransactionReport(req, res) {
     if (currency) {
       pipeline.push({
         $match: {
-          currency: { $regex: new RegExp(`^${currency}$`, 'i') },
+          currency: { $regex: new RegExp(`^${currency}$`, "i") },
         },
       });
     }
@@ -73,7 +73,7 @@ async function searchTransactionReport(req, res) {
     if (country) {
       pipeline.push({
         $match: {
-          country: { $regex: new RegExp(`^${country}$`, 'i') },
+          country: { $regex: new RegExp(`^${country}$`, "i") },
         },
       });
     }
@@ -81,7 +81,7 @@ async function searchTransactionReport(req, res) {
     if (cardtype) {
       pipeline.push({
         $match: {
-          cardtype: { $regex: new RegExp(`^${cardtype}$`, 'i') },
+          cardtype: { $regex: new RegExp(`^${cardtype}$`, "i") },
         },
       });
     }
@@ -105,8 +105,10 @@ async function searchTransactionReport(req, res) {
       });
     }
 
-    const transactions = await LiveTransactionTable.aggregate(pipeline).sort({ transactiondate: -1 });
-    res.json(transactions );
+    const transactions = await LiveTransactionTable.aggregate(pipeline).sort({
+      transactiondate: -1,
+    });
+    res.json(transactions);
   } catch (error) {
     console.error("Error searching transactions:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -114,52 +116,53 @@ async function searchTransactionReport(req, res) {
 }
 
 function adjustTimeToIST(time, offset) {
-  const date = new Date( time );
+  const date = new Date(time);
 
-  const ISTOffset = 5.5 * 60; 
-  const targetOffset = offset * 60; 
+  const ISTOffset = 5.5 * 60;
+  const targetOffset = offset * 60;
   const additionalOffset = 1.5 * 60;
 
-  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000);
-  console.log(adjustedDate)
+  const adjustedDate = new Date(
+    date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000
+  );
+  console.log(adjustedDate);
   return `${adjustedDate.getFullYear()}-${(
-      "0" +
-      (adjustedDate.getMonth() + 1)
-    ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${("0" + adjustedDate.getHours()).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${("0" + adjustedDate.getSeconds()).slice(-2)}`;;
+    "0" +
+    (adjustedDate.getMonth() + 1)
+  ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${(
+    "0" + adjustedDate.getHours()
+  ).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${(
+    "0" + adjustedDate.getSeconds()
+  ).slice(-2)}`;
 }
 
 async function compareReport(req, res) {
   try {
-    const {
-      fromDate,
-      toDate,
-      paymentgateway,
-    } = req.body;
-console.table({fromDate,
-  toDate,
-  paymentgateway})
+    const { fromDate, toDate, paymentgateway } = req.body;
+    console.table({ fromDate, toDate, paymentgateway });
     const timezoneOffsets = {
-      "MilkyPay" : 4
-    }
+      MilkyPay: 4,
+    };
 
     const offset = timezoneOffsets[paymentgateway];
-    console.log(offset)
+    console.log(offset);
 
     const fromTime = new Date(`${fromDate}T00:00:00.000+05:30`);
     const toTime = new Date(`${toDate}T23:59:59.999+05:30`);
 
     const adjustedFromTime = adjustTimeToIST(fromTime, offset);
     const adjustedToTime = adjustTimeToIST(toTime, offset);
-    console.table({adjustedFromTime,adjustedToTime})
-   
+    console.table({ adjustedFromTime, adjustedToTime });
+
     const pipeline = [];
-      pipeline.push({
+    pipeline.push(
+      {
         $match: {
           transactiondate: {
             $gte: adjustedFromTime,
             $lte: adjustedToTime,
           },
-          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
+          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, "i") },
         },
       },
       {
@@ -167,9 +170,10 @@ console.table({fromDate,
           txnid: 1,
           Status: 1,
           amount: 1,
-          _id: 0 // Exclude the _id field
-        }
-      });
+          _id: 0, // Exclude the _id field
+        },
+      }
+    );
 
     const transactions = await LiveTransactionTable.aggregate(pipeline);
     res.json(transactions);
@@ -205,4 +209,3 @@ module.exports = {
   compareReport,
   quickSearch,
 };
-
