@@ -116,64 +116,65 @@ async function searchTransactionReport(req, res) {
 }
 
 function adjustTimeToIST(time, offset) {
-  const date = new Date(time);
+  const date = new Date( time );
 
   const ISTOffset = 5.5 * 60;
   const targetOffset = offset * 60;
   const additionalOffset = 1.5 * 60;
 
-  const adjustedDate = new Date(
-    date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000
-  );
-  console.log(adjustedDate);
+  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000);
   return `${adjustedDate.getFullYear()}-${(
     "0" +
     (adjustedDate.getMonth() + 1)
-  ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${(
-    "0" + adjustedDate.getHours()
-  ).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${(
-    "0" + adjustedDate.getSeconds()
-  ).slice(-2)}`;
+  ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${("0" + adjustedDate.getHours()).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${("0" + adjustedDate.getSeconds()).slice(-2)}`;
+  console.log(adjustedDate)
 }
 
 async function compareReport(req, res) {
   try {
-    const { fromDate, toDate, paymentgateway } = req.body;
-    console.table({ fromDate, toDate, paymentgateway });
+    const {
+      fromDate,
+      toDate,
+      paymentgateway,
+    } = req.body;
+    console.table({fromDate,
+      toDate,
+      paymentgateway})
     const timezoneOffsets = {
-      MilkyPay: 4,
-    };
+      "MilkyPay": 4
+    }
 
     const offset = timezoneOffsets[paymentgateway];
     console.log(offset);
-
     const fromTime = new Date(`${fromDate}T00:00:00.000+05:30`);
     const toTime = new Date(`${toDate}T23:59:59.999+05:30`);
 
     const adjustedFromTime = adjustTimeToIST(fromTime, offset);
     const adjustedToTime = adjustTimeToIST(toTime, offset);
-    console.table({ adjustedFromTime, adjustedToTime });
 
     const pipeline = [];
-    pipeline.push(
-      {
-        $match: {
-          transactiondate: {
-            $gte: adjustedFromTime,
-            $lte: adjustedToTime,
-          },
-          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, "i") },
+    pipeline.push({
+      $match: {
+        transactiondate: {
+          $gte: adjustedFromTime,
+          $lte: adjustedToTime,
         },
+        paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
+      },
+    },
+      {
+        $sort: { transactiondate: -1 }
       },
       {
         $project: {
           txnid: 1,
           Status: 1,
           amount: 1,
-          _id: 0, // Exclude the _id field
-        },
-      }
-    );
+          _id: 0
+        }
+      });
+
+    console.table( {adjustedFromTime, adjustedToTime})
 
     const transactions = await LiveTransactionTable.aggregate(pipeline);
     res.json(transactions);
