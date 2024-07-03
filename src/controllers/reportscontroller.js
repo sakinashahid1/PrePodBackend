@@ -115,53 +115,34 @@ async function searchTransactionReport(req, res) {
   }
 }
 
-function adjustTimeToIST(time, offset) {
-  const date = new Date( time );
-
-  const ISTOffset = 5.5 * 60;
-  const targetOffset = offset * 60;
-  const additionalOffset = 1.5 * 60;
-
-  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000);
-  return `${adjustedDate.getFullYear()}-${(
-    "0" +
-    (adjustedDate.getMonth() + 1)
-  ).slice(-2)}-${("0" + adjustedDate.getDate()).slice(-2)} ${("0" + adjustedDate.getHours()).slice(-2)}:${("0" + adjustedDate.getMinutes()).slice(-2)}:${("0" + adjustedDate.getSeconds()).slice(-2)}`;
-  console.log(adjustedDate)
-}
-
 async function compareReport(req, res) {
   try {
-    const {
-      fromDate,
-      toDate,
-      paymentgateway,
-    } = req.body;
-    console.table({fromDate,
-      toDate,
-      paymentgateway})
+    const { fromDate, toDate, paymentgateway } = req.body;
+    console.table({ fromDate, toDate, paymentgateway });
+
     const timezoneOffsets = {
       "MilkyPay": 4
-    }
+    };
 
     const offset = timezoneOffsets[paymentgateway];
     console.log(offset);
-    const fromTime = new Date(`${fromDate}T00:00:00.000+05:30`);
-    const toTime = new Date(`${toDate}T23:59:59.999+05:30`);
 
-    const adjustedFromTime = adjustTimeToIST(fromTime, offset);
-    const adjustedToTime = adjustTimeToIST(toTime, offset);
+    const fromTime = new Date(`${fromDate}T00:00:00.000`);
+    const toTime = new Date(`${toDate}T23:59:59.999`);
 
-    const pipeline = [];
-    pipeline.push({
-      $match: {
-        transactiondate: {
-          $gte: adjustedFromTime,
-          $lte: adjustedToTime,
+    const adjustedFromTime = adjustTimeToOffset(fromTime, offset);
+    const adjustedToTime = adjustTimeToOffset(toTime, offset);
+
+    const pipeline = [
+      {
+        $match: {
+          transactiondate: {
+            $gte: adjustedFromTime,
+            $lte: adjustedToTime,
+          },
+          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
         },
-        paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, 'i') },
       },
-    },
       {
         $sort: { transactiondate: -1 }
       },
@@ -170,11 +151,13 @@ async function compareReport(req, res) {
           txnid: 1,
           Status: 1,
           amount: 1,
+          transactiondate: 1,
           _id: 0
         }
-      });
+      }
+    ];
 
-    console.table( {adjustedFromTime, adjustedToTime})
+    console.table({ adjustedFromTime, adjustedToTime });
 
     const transactions = await LiveTransactionTable.aggregate(pipeline);
     res.json(transactions);
@@ -184,6 +167,21 @@ async function compareReport(req, res) {
   }
 }
 
+function adjustTimeToOffset(time, offset) {
+  const date = new Date( time );
+
+  date.setMinutes(date.getMinutes() );
+
+  const formattedDate = `${date.getFullYear()}-${(
+    "0" + (date.getMonth() + 1)
+  ).slice(-2)}-${("0" + date.getDate()).slice(-2)} ${(
+    "0" + date.getHours()
+  ).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}:${(
+    "0" + date.getSeconds()
+  ).slice(-2)}`;
+
+  return formattedDate;
+}
 async function quickSearch(req, res) {
   const { id } = req.query;
 
