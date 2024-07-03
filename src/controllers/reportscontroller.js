@@ -114,12 +114,13 @@ async function searchTransactionReport(req, res) {
 }
 
 function adjustTimeToIST(time, offset) {
-  const date = new Date(time);
-  console.log(date)
+  const date = new Date( time );
+
   const ISTOffset = 5.5 * 60; 
   const targetOffset = offset * 60; 
+  const additionalOffset = 1.5 * 60;
 
-  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset) * 60000);
+  const adjustedDate = new Date(date.getTime() + (targetOffset - ISTOffset + additionalOffset) * 60000);
   console.log(adjustedDate)
   return `${adjustedDate.getFullYear()}-${(
       "0" +
