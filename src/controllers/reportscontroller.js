@@ -123,13 +123,15 @@ async function compareReport(req, res) {
     const timezoneOffsets = {
       "MilkyPay": 4
     };
-
-    const offset = timezoneOffsets[paymentgateway];
+const ISToffset = 5.5;
+    const bankoffset = timezoneOffsets[paymentgateway];
+    const offset = ISToffset - bankoffset
     console.log(offset);
+console.log(typeof fromDate)
+    const fromTime = new Date(`${fromDate}T00:00:00`);
+    const toTime = new Date(`${toDate}T23:59:59`);
 
-    const fromTime = new Date(`${fromDate}T00:00:00.000`);
-    const toTime = new Date(`${toDate}T23:59:59.999`);
-
+console.table({fromTime, toTime})
     const adjustedFromTime = adjustTimeToOffset(fromTime, offset);
     const adjustedToTime = adjustTimeToOffset(toTime, offset);
 
@@ -169,19 +171,17 @@ async function compareReport(req, res) {
 
 function adjustTimeToOffset(time, offset) {
   const date = new Date( time );
+  console.log("date",date)
+  console.log("type date",typeof date)
 
-  const systemOffset = date.getTimezoneOffset();
+  const newDate = new Date(date.getTime() + (offset * 60 * 60 * 1000));
 
-  const netOffset = (offset * 60) + (systemOffset);
-
-  date.setMinutes(date.getMinutes() - netOffset);
-
-  const formattedDate = `${date.getFullYear()}-${(
-    "0" + (date.getMonth() + 1)
-  ).slice(-2)}-${("0" + date.getDate()).slice(-2)} ${(
-    "0" + date.getHours()
-  ).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}:${(
-    "0" + date.getSeconds()
+  const formattedDate = `${newDate.getFullYear()}-${(
+    "0" + (newDate.getMonth() + 1)
+  ).slice(-2)}-${("0" + newDate.getDate()).slice(-2)} ${(
+    "0" + newDate.getHours()
+  ).slice(-2)}:${("0" + newDate.getMinutes()).slice(-2)}:${(
+    "0" + newDate.getSeconds()
   ).slice(-2)}`;
 
   return formattedDate;
