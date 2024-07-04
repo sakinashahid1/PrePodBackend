@@ -170,7 +170,11 @@ async function compareReport(req, res) {
 function adjustTimeToOffset(time, offset) {
   const date = new Date( time );
 
-  date.setMinutes(date.getMinutes() );
+  const systemOffset = date.getTimezoneOffset();
+
+  const netOffset = (offset * 60) + (systemOffset);
+
+  date.setMinutes(date.getMinutes() - netOffset);
 
   const formattedDate = `${date.getFullYear()}-${(
     "0" + (date.getMonth() + 1)
@@ -182,6 +186,7 @@ function adjustTimeToOffset(time, offset) {
 
   return formattedDate;
 }
+
 async function quickSearch(req, res) {
   const { id } = req.query;
 
