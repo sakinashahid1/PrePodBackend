@@ -128,8 +128,8 @@ const ISToffset = 5.5;
     const offset = ISToffset - bankoffset
     console.log(offset);
 console.log(typeof fromDate)
-    const fromTime = new Date(`${fromDate}T00:00:00`);
-    const toTime = new Date(`${toDate}T23:59:59`);
+    const fromTime = new Date(fromDate);
+    const toTime = new Date(toDate);
 
 console.table({fromTime, toTime})
     const adjustedFromTime = adjustTimeToOffset(fromTime, offset);
