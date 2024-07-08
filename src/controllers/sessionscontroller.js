@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const LoginActivity = require("../models/LoginActivity")
 const nodemailer = require("nodemailer");
 
 async function login(req, res) {
@@ -172,10 +173,45 @@ const resetPassword = async (req, res) => {
   }
 };
 
+async function sessionActivity(req, res) {
+  try {
+    const { email, company_name, login_time, logout_time } = req.body;
+
+    const currentTime = Date.now();
+    const sevenDaysAgo = currentTime - 7 * 24 * 60 * 60 * 1000;
+
+    await LoginActivity.deleteMany({ login_time: { $lt: sevenDaysAgo } });
+
+    const newActivity = new LoginActivity({
+      email,
+      company_name,
+      login_time: parseInt(login_time),
+      logout_time: parseInt(logout_time),
+    });
+
+    const savedActivity = await newActivity.save();
+
+    sessionStamp = newActivity.logout_time - newActivity.login_time;
+
+    sessionStampFormatted = sessionStamp / 1000;
+    const sessionStampSeconds = Math.floor((sessionStamp / 1000) % 60);
+    const sessionStampMinutes = Math.floor(sessionStamp / (1000 * 60));
+
+    savedActivity.sessionDuration = `${sessionStampMinutes}m:${sessionStampSeconds}s`
+    await savedActivity.save()
+
+    res.status(201).json(savedActivity);
+  } catch (error) {
+    console.error('Error saving session activity:', error);
+    res.status(500).json({ error: 'Failed to save session activity' });
+  }
+}
+
 module.exports = {
   login,
   updateUser,
   userDetails,
   sendOTPByEmail,
   resetPassword,
+  sessionActivity
 };

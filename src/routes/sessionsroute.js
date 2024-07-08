@@ -6,6 +6,7 @@ const {
   userDetails,
   sendOTPByEmail,
   resetPassword,
+  sessionActivity
 } = require("../controllers/sessionscontroller");
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.post("/login", login);
 router.put("/updateuser", verifyToken, updateUser);
 router.get("/userdetails", verifyToken, userDetails);
 router.post("/forgotpassword", sendOTPByEmail),
-  router.patch("/resetpassword", resetPassword),
+router.patch("/resetpassword", resetPassword),
+router.post("/sessionactivity", sessionActivity);
+
   (module.exports = router);
