@@ -27,7 +27,7 @@ const ApprovalRatioChart = async (req, res) => {
 };
 
 const approvalRatio = async (req, res) => {
-  const { fromDate, toDate, merchant } = req.body;
+  const { fromDate, toDate, merchant } = req.query;
 
   if (!fromDate || !toDate || !merchant) {
       return res.status(400).json({ error: 'fromDate, toDate, and merchant are required parameters' });
