@@ -29,8 +29,6 @@ async function createClient(req, res) {
       turnover,
       expected_chargeback_percentage,
       website_url,
-      merchant_id,
-      status,
       type,
       industry,
       currency,
@@ -38,14 +36,8 @@ async function createClient(req, res) {
 
     const client_id = await calculateClientId();
 
-    const signupKey = jwt.sign(
-      { clientId: Client.client_id, companyName: Client.company_name },
-      process.env.SECRET_KEY
-    );
-
     const client = new Client({
       client_id, 
-      signupKey,
       company_name,
       username,
       email,
@@ -70,8 +62,6 @@ async function createClient(req, res) {
       turnover,
       expected_chargeback_percentage,
       website_url,
-      merchant_id,
-      status,
       type,
       industry,
       currency,

@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const Client = require("../models/Client")
 
 // Controller for user signup
 async function signup(req, res) {
@@ -9,11 +10,10 @@ async function signup(req, res) {
       email,
       mobile_no,
       country,
-      role,
       password,
       confirm_password,
-      company_name,
-      signupKey
+      client_id,
+      role
     } = req.body;
 
     if (password !== confirm_password) {
@@ -22,12 +22,13 @@ async function signup(req, res) {
         .json({ message: "Password and confirm password do not match" });
     }
 
-    const client = await Client.findOne({ company_name, signupKey: signupKey });
+    const client = await Client.findOne({ client_id });
     if (!client) {
-      return res.status(400).json({ message: "Invalid signup key" });
+      return res.status(400).json({ message: "This Company Does Not exists" });
     }
 
-    if (client.signupKeyCounter > 0) {
+    if (client.rootAccountCreated > 0) {
+      console.log("root key repeated")
       return res.status(400).json({ message: "Signup key has already been used" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -38,12 +39,12 @@ async function signup(req, res) {
       country,
       role,
       password: hashedPassword,
-      company_name,
+      company_name: client.company_name,
     });
 
     await user.save();
 
-    await Client.updateOne({ _id: client._id }, { $inc: { signupKeyCounter: 1 } });
+    await Client.updateOne({ _id: client._id }, {rootAccountCreated: 1 });
 
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {

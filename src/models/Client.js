@@ -26,7 +26,6 @@ const clientSchema = new mongoose.Schema({
   turnover: { type: String },
   expected_chargeback_percentage: { type: Number },
   website_url: { type: String },
-  merchant_id: { type: String },
   status: { type: String, enum: ["Active", "Inactive", "Pending"], default: "Active" },
   last_settled_date: {type: String},
   type: { type: String },
@@ -40,8 +39,9 @@ const clientSchema = new mongoose.Schema({
       },
     },
   },
-  signupKey: { type: String },
-  signupKeyCounter: { type: Number, default: 0 }
+  apiKey: { type: String },
+  apiSecret: { type: String }, 
+  rootAccountCreated: { type: Boolean, default: 0 }
 });
 
 const Client = mongoose.model("Client", clientSchema);
