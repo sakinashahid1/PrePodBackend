@@ -2,6 +2,7 @@ const express = require("express");
 const { verifyToken } = require("../middlewares/verifyToken");
 const {
   signup,
+  getLoginCredentials,
   getUsers,
   updateUser,
   userDetails,userShortcut, getUserShortcuts, deleteUserShortcuts
@@ -11,6 +12,7 @@ const router = express.Router();
 
 // Define user routes
 router.post("/signup", signup);
+router.get("/logincredentials", verifyToken, getLoginCredentials);
 router.get("/signup", verifyToken, getUsers);
 router.patch("/updateUser", verifyToken, updateUser);
 router.get("/userdetails", verifyToken, userDetails);

@@ -1,8 +1,13 @@
-const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const Client = require("../models/Client")
+const CryptoJS = require("crypto-js");
+const secretKey = process.env.SECRET_KEY;
 
-// Controller for user signup
+function encryptPassword(password) {
+  const keySize = 256 / 32;
+  return CryptoJS.AES.encrypt(password, secretKey, { keySize: keySize }).toString();
+}
+
 async function signup(req, res) {
   try {
     const {
@@ -24,29 +29,57 @@ async function signup(req, res) {
 
     const client = await Client.findOne({ client_id });
     if (!client) {
-      return res.status(400).json({ message: "This Company Does Not exists" });
+      return res.status(400).json({ message: "This Company Does Not exist" });
     }
 
     if (client.rootAccountCreated > 0) {
-      console.log("root key repeated")
+      console.log("root key repeated");
       return res.status(400).json({ message: "Signup key has already been used" });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const encryptedPassword = encryptPassword(password);
     const user = new User({
       name,
       email,
       mobile_no,
       country,
       role,
-      password: hashedPassword,
+      password: encryptedPassword,
       company_name: client.company_name,
     });
 
     await user.save();
 
-    await Client.updateOne({ _id: client._id }, {rootAccountCreated: 1 });
+    await Client.updateOne({ _id: client._id }, { rootAccountCreated: 1 });
 
     res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+function decryptPassword(encryptedPassword) {
+  try {
+    const keySize = 256 / 32;
+    const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey, { keySize: keySize });
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.error("Error decrypting password:", error);
+    return "";
+  }
+}
+
+async function getLoginCredentials(req, res) {
+  try {
+    const { company_name } = req.query;
+
+    const user = await User.findOne({ company_name }, 'email password');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const decryptedPassword = decryptPassword(user.password);
+    res.status(200).json({ email: user.email, password: decryptedPassword });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -210,4 +243,4 @@ async function deleteUserShortcuts(req, res) {
   }
 }
 
-module.exports = { signup, getUsers, updateUser, userDetails, userShortcut, getUserShortcuts, deleteUserShortcuts };
+module.exports = { signup, getLoginCredentials, getUsers, updateUser, userDetails, userShortcut, getUserShortcuts, deleteUserShortcuts };
