@@ -20,7 +20,14 @@ async function signup(req, res) {
       client_id,
       role
     } = req.body;
-
+console.table({ name,
+  email,
+  mobile_no,
+  country,
+  password,
+  confirm_password,
+  client_id,
+  role})
     if (password !== confirm_password) {
       return res
         .status(400)

@@ -121,7 +121,9 @@ async function compareReport(req, res) {
     console.table({ fromDate, toDate, paymentgateway });
 
     const timezoneOffsets = {
-      "MilkyPay": 4
+      "MilkyPay": 4,
+      "Arca":5.5,
+      "Neonpay":5.5
     };
 const ISToffset = 5.5;
     const bankoffset = timezoneOffsets[paymentgateway];
