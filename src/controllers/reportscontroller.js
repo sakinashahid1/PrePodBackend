@@ -105,9 +105,7 @@ async function searchTransactionReport(req, res) {
       });
     }
 
-    const transactions = await LiveTransactionTable.aggregate(pipeline).sort({
-      transactiondate: -1,
-    });
+    const transactions = await LiveTransactionTable.aggregate(pipeline);
     res.json(transactions);
   } catch (error) {
     console.error("Error searching transactions:", error);
@@ -189,6 +187,139 @@ function adjustTimeToOffset(time, offset) {
   return formattedDate;
 }
 
+async function searchSettledTransactions(req, res) {
+  try {
+    const {
+      searchIds,
+      status,
+      merchant,
+      fromDate,
+      toDate,
+      mid,
+      paymentgateway,
+      currency,
+      country,
+      cardtype,
+      cardnumber,
+      isBankSettled,
+    } = req.body;
+
+    const pipeline = [];
+
+    if (fromDate && toDate) {
+      pipeline.push({
+        $match: {
+          transactiondate: {
+            $gte: fromDate.replace("T", " "),
+            $lte: toDate.replace("T", " "),
+          },
+        },
+      });
+    }
+
+    if (status) {
+      pipeline.push({
+        $match: {
+          Status: { $regex: new RegExp(`^${status}$`, "i") },
+        },
+      });
+    }
+
+    if (merchant) {
+      pipeline.push({
+        $match: {
+          merchant: { $regex: new RegExp(`^${merchant}$`, "i") },
+        },
+      });
+    }
+
+    if (mid) {
+      pipeline.push({
+        $match: {
+          mid: { $regex: new RegExp(`^${mid}$`, "i") },
+        },
+      });
+    }
+
+    if (paymentgateway) {
+      pipeline.push({
+        $match: {
+          paymentgateway: { $regex: new RegExp(`^${paymentgateway}$`, "i") },
+        },
+      });
+    }
+
+    if (currency) {
+      pipeline.push({
+        $match: {
+          currency: { $regex: new RegExp(`^${currency}$`, "i") },
+        },
+      });
+    }
+
+    if (country) {
+      pipeline.push({
+        $match: {
+          country: { $regex: new RegExp(`^${country}$`, "i") },
+        },
+      });
+    }
+
+    if (cardtype) {
+      pipeline.push({
+        $match: {
+          cardtype: { $regex: new RegExp(`^${cardtype}$`, "i") },
+        },
+      });
+    }
+
+    if (cardnumber) {
+      pipeline.push({
+        $match: {
+          cardnumber: cardnumber,
+        },
+      });
+    }
+
+    if (searchIds) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { txnid: { $in: searchIds.split(" ") } },
+            { merchantTxnId: { $in: searchIds.split(" ") } },
+          ],
+        },
+      });
+    }
+
+    if (isBankSettled) {
+      pipeline.push({
+        $match: {
+          isBankSettled: isBankSettled
+        }
+      })
+    }
+
+    pipeline.push({
+      $project: {
+        _id: 0, 
+        txnid: 1,
+        amount: 1,
+        merchant: 1,
+        paymentgateway: 1,
+        Status: 1,
+        isBankSettled: 1
+      }
+    });
+
+    const transactions = await LiveTransactionTable.aggregate(pipeline)
+    res.json(transactions);
+  } catch (error) {
+    console.error("Error searching transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
 async function quickSearch(req, res) {
   const { id } = req.query;
 
@@ -214,4 +345,5 @@ module.exports = {
   searchTransactionReport,
   compareReport,
   quickSearch,
+  searchSettledTransactions
 };

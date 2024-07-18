@@ -131,7 +131,14 @@ const capitalizeCountryName = (country) => {
 
 const midList = async (req, res) => {
   try {
-    const mids = await LiveTransactionTable.distinct("mid");
+    const { merchant } = req.query;
+    let query = {};
+    
+    if (merchant) {
+      query.merchant = merchant; 
+    }
+    
+    const mids = await LiveTransactionTable.distinct("mid", query);
     res.json(mids);
   } catch (error) {
     console.error(error);
