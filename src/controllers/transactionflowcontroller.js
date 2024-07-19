@@ -128,7 +128,7 @@ async function initiateTransaction(req, res) {
     });
 
     await newTransaction.save();
-    const paylinkup_backURL = "https://www.paylinkup.online/callbackurl";
+    const paylinkup_backURL = "http://3.208.112.209/callbackurl";
     // Perform the remaining operations asynchronously
     const response = await processTransaction(
       txnId,
