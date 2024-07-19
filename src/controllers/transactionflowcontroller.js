@@ -98,14 +98,17 @@ async function initiateTransaction(req, res) {
       cardCVV,
       backURL,
       requestMode,
+      apiKey,
+      apiSecret,
+      mid,
     } = req.body;
+    
     const maskedcardno = mask(cardnumber);
 
     const token = generateToken();
 
     const txnId = generateUniqueTransactionId();
     const [cardtype, country] = await binAPI(maskedcardno.slice(0, 6));
-
     const newTransaction = new TempTransactionTable({
       merchantID,
       merchantTxnID: transactionID,
@@ -126,7 +129,7 @@ async function initiateTransaction(req, res) {
       txnId,
       token,
     });
-
+    
     await newTransaction.save();
     const paylinkup_backURL = "http://3.208.112.209/callbackurl";
     // Perform the remaining operations asynchronously
@@ -142,16 +145,17 @@ async function initiateTransaction(req, res) {
       cardExpire,
       cardCVV,
       paylinkup_backURL,
-      requestMode
+      requestMode,
+      apiKey,
+      apiSecret,
+      mid,
     );
-
+console.log(response)
     // Redirect to token url
     const redirectUrl = `https://centpays.com/v2/ini_payment/${response.token}`;
     res.status(200).json({ redirectUrl });
   } catch (error) {
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Something wrong happened" });
-    }
+      res.status(500).json({ error: error });
   }
 }
 
@@ -167,7 +171,10 @@ async function processTransaction(
   cardExpire,
   cardCVV,
   backURL,
-  requestMode
+  requestMode,
+  apiKey,
+  apiSecret,
+  mid,
 ) {
   try {
     // const iscountryBlacklisted = blackListed.some(
@@ -197,7 +204,9 @@ async function processTransaction(
     };
 
     console.log("data", dataforBank);
-    const responsefromBank = await Bank(dataforBank);
+    const responsefromBank = await Bank(dataforBank, apiKey,
+      apiSecret,
+      mid);
     console.log("response", responsefromBank);
     update = {
       status: responsefromBank.status,
@@ -219,7 +228,9 @@ async function processTransaction(
   }
 }
 
-async function Bank(dataforBank) {
+async function Bank(dataforBank, apiKey,
+  apiSecret,
+  mid) {
   try {
     // const response = await fetch("http://54.159.39.148/", {
 
@@ -228,9 +239,10 @@ async function Bank(dataforBank) {
       headers: {
         "Content-Type": "application/json",
         "api-key":
-          "live_$2y$10$MO5xnO7AVcwTKmovvi6fEuTDdlaT/CRpCgdK0nTjuNqZ1xWiZrmL6",
+        apiKey,
         "api-secret":
-          "live_$2y$10$fNghQ0yJycZCeDinrWRG/.1rHN74XCM3lLpd2fWfrCFkwG.cEz.3W",
+        apiSecret,
+        "mid":mid
       },
       body: JSON.stringify(dataforBank),
     });
