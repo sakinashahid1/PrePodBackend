@@ -247,6 +247,131 @@ async function acquirerList(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+const previousResults = { results: null, lastEmailTime: null };
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: 'no.reply.centpays@gmail.com',
+    pass: 'hkbm gogq vyni fzfy',
+  },
+});
+
+async function sendEmail(subject, text, to) {
+  const mailOptions = {
+    from: 'no.reply.centpays@gmail.com',
+    to: to, 
+    subject: subject,
+    text: text,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.response);
+  } catch (error) {
+    console.error('Failed to send email:', error);
+  }
+}
+
+async function declineReasons(req, res) {
+  try {
+    const startDate = new Date();
+    const formattedStartDate = `${startDate.getFullYear()}-${(
+      "0" + (startDate.getMonth() + 1)
+    ).slice(-2)}-${("0" + startDate.getDate()).slice(-2)} 00:00:00`;
+
+    const endDate = new Date();
+    const formattedEndDate = `${endDate.getFullYear()}-${(
+      "0" + (endDate.getMonth() + 1)
+    ).slice(-2)}-${("0" + endDate.getDate()).slice(-2)} 23:59:59`;
+
+    console.table([formattedStartDate, formattedEndDate]);
+
+    const transactions = await LiveTransactionTable.aggregate([
+      {
+        $match: {
+          transactiondate: {
+            $gte: formattedStartDate,
+            $lte: formattedEndDate,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$merchant",
+          totalTransactions: { $sum: 1 },
+          failedTransactions: {
+            $sum: {
+              $cond: [
+                {
+                  $in: ["$Status", ["Failed", "Incomplete"]]
+                },
+                1,
+                0
+              ]
+            },
+          },
+          country0: {
+            $sum: { $cond: [{ $eq: ["$country", "0"] }, 1, 0] },
+          },
+          noPaymentGatewayAssigned: {
+            $sum: { $cond: [{ $eq: ["$paymentgateway", ""]}, 1, 0]}
+          }
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          merchant: "$_id",
+          totalTransactions: 1,
+          failedTransactions: 1,
+          country0: 1,
+          noPaymentGatewayAssigned: 1,
+          failedPercentage: {
+            $multiply: [
+              { $divide: ["$failedTransactions", "$totalTransactions"] },
+              100,
+            ],
+          },
+        },
+      },
+      {
+        $match: {
+          failedPercentage: { $gte: 90 },
+          totalTransactions: { $gte: 300 }
+        },
+      },
+    ]);
+
+    if (transactions.length > 0) {
+      const subject = "Decline Reasons Report";
+      const message = `Decline Reasons:\n${transactions.map(tx => `Merchant: ${tx.merchant}, Total Transactions: ${tx.totalTransactions}, Failed Transactions: ${tx.failedTransactions}, Country 0: ${tx.country0}, No Payment Gateway Assigned: ${tx.noPaymentGatewayAssigned}, Failed Percentage: ${tx.failedPercentage.toFixed(2)}%`).join('\n')}`;
+
+      const now = Date.now();
+      const hasResultsChanged = JSON.stringify(transactions) !== previousResults.results;
+      const isCooldownOver = !previousResults.lastEmailTime || now - previousResults.lastEmailTime >= 3 * 60 * 60 * 1000;
+
+      if (hasResultsChanged && isCooldownOver) {
+        // List of email addresses to send the report to
+        const recipients = [
+          'mitendrasinghtomar360@gmail.com',
+          'annagarciagalleria@gmail.com',
+          'sakinashahid2102@gmail.com'
+        ];
+
+        await sendEmail(subject, message, recipients.join(','));
+        previousResults.results = JSON.stringify(transactions);
+        previousResults.lastEmailTime = now;
+      }
+    }
+  } catch (error) {
+    console.error('Error in declineReasons function:', error);
+  }
+}
+
+setInterval(declineReasons, 3 * 60 * 60  * 1000);
+
 module.exports = { 
   ApprovalRatioChart, 
   approvalRatio, 
