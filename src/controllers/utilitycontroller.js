@@ -1,4 +1,5 @@
 require("../config/database");
+const nodemailer = require("nodemailer");
 const LiveTransactionTable = require("../models/LiveTransactionTable");
 const Settlementtable = require("../models/Settlementtable");
 const Client = require("../models/Client");
