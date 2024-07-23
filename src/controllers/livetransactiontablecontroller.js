@@ -199,6 +199,7 @@ async function fetchTransactionsAndUpdate(req, res) {
             birthDate: item.birthDate,
             internal_callback: item.internal_callback,
             internal_callback_time: item.internal_callback_time,
+            is_redirect: item.is_redirect === null ? "No" : "Yes",
     }));
     
     const insertResult = await LiveTransactionTable.insertMany(newRecords);
