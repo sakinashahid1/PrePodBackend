@@ -1,6 +1,45 @@
 require("../config/database");
 const LiveTransactionTable = require("../models/LiveTransactionTable");
 
+// let apiToggle = true;
+
+// async function fetchFromHandyAPI(bin) {
+//   const response = await fetch(`https://data.handyapi.com/bin/${bin}`);
+//   if (!response.ok) {
+//     throw new Error(`HandyAPI response was not ok: ${response.statusText}`);
+//   }
+
+//   const data = await response.json();
+//   return [data.Scheme, data.Country.Name];
+// }
+
+// async function fetchFromNeutrinoAPI(bin) {
+//   const response = await fetch(`https://neutrinoapi.net/bin-lookup?bin=${bin}`);
+//   if (!response.ok) {
+//     throw new Error(`NeutrinoAPI response was not ok: ${response.statusText}`);
+//   }
+
+//   const data = await response.json();
+//   return [data.cardBrand, data.country];
+// }
+
+// async function binAPI(cardNo) {
+//   try {
+//     const result = apiToggle ? await fetchFromHandyAPI(bin) : await fetchFromNeutrinoAPI(bin);
+//     apiToggle = !apiToggle; // Toggle the API for the next request
+//     return result;
+//   } catch (error) {
+//     console.error(`Primary API failed, trying fallback API:`, error);
+//     try {
+//       const fallbackResult = apiToggle ? await fetchFromNeutrinoAPI(bin) : await fetchFromHandyAPI(bin);
+//       return fallbackResult;
+//     } catch (fallbackError) {
+//       console.error("Both APIs failed:", fallbackError);
+//       throw fallbackError;
+//     }
+//   }
+// }
+
 async function getLivedata(req, res) {
   try {
     const apiUrl = "https://centpays.com/apidoc/get_all_transaction";
@@ -28,6 +67,7 @@ async function getLivedata(req, res) {
 
     for (const item of data) {
       if (item.id > maxId) {
+        binAPI(item.cardNo)
         newRecords.push({
           livedata_id: item.id,
             txnid: item.transactionId,
@@ -115,7 +155,7 @@ async function getLivedata(req, res) {
 }
 
 const interval = 60000; 
-setInterval(getLivedata, interval);
+// setInterval(getLivedata, interval);
 
 async function fetchTransactionsAndUpdate(req, res) {
   const { fromDate, toDate } = req.query;
