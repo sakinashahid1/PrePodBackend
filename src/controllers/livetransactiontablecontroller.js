@@ -67,7 +67,7 @@ async function getLivedata(req, res) {
 
     for (const item of data) {
       if (item.id > maxId) {
-        binAPI(item.cardNo)
+        // binAPI(item.cardNo)
         newRecords.push({
           livedata_id: item.id,
             txnid: item.transactionId,
