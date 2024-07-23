@@ -1,44 +1,70 @@
 require("../config/database");
 const LiveTransactionTable = require("../models/LiveTransactionTable");
+const Bintable = require("../models/BinTable")
 
-// let apiToggle = true;
+let apiToggle = true;
 
-// async function fetchFromHandyAPI(bin) {
-//   const response = await fetch(`https://data.handyapi.com/bin/${bin}`);
-//   if (!response.ok) {
-//     throw new Error(`HandyAPI response was not ok: ${response.statusText}`);
-//   }
+async function fetchFromHandyAPI(bin) {
+  try {
+    const response = await fetch(`https://data.handyapi.com/bin/${bin}`);
+    if (!response.ok) {
+      throw new Error(`HandyAPI response was not ok: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return [data.Scheme, data.Country.Name];
+  } catch (error) {
+    console.error("Error fetching from HandyAPI:", error);
+    throw error;
+  }
+}
 
-//   const data = await response.json();
-//   return [data.Scheme, data.Country.Name];
-// }
+async function fetchFromNeutrinoAPI(bin) {
+  try {
+    const response = await fetch(`https://neutrinoapi.net/bin-lookup?bin=${bin}`);
+    if (!response.ok) {
+      throw new Error(`NeutrinoAPI response was not ok: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return [data.cardBrand, data.country];
+  } catch (error) {
+    console.error("Error fetching from NeutrinoAPI:", error);
+    throw error;
+  }
+}
 
-// async function fetchFromNeutrinoAPI(bin) {
-//   const response = await fetch(`https://neutrinoapi.net/bin-lookup?bin=${bin}`);
-//   if (!response.ok) {
-//     throw new Error(`NeutrinoAPI response was not ok: ${response.statusText}`);
-//   }
+async function binAPI(cardNo) {
+  const bin = cardNo.slice(0, 6); 
+  try {
+    // Attempt to fetch data from the primary API
+    const result = apiToggle ? await fetchFromHandyAPI(bin) : await fetchFromNeutrinoAPI(bin);
+    apiToggle = !apiToggle; // Toggle the API for the next request
 
-//   const data = await response.json();
-//   return [data.cardBrand, data.country];
-// }
+    const newBin = new Bintable({
+      bin,
+      cardType: result[0],
+      country: result[1],
+    });
 
-// async function binAPI(cardNo) {
-//   try {
-//     const result = apiToggle ? await fetchFromHandyAPI(bin) : await fetchFromNeutrinoAPI(bin);
-//     apiToggle = !apiToggle; // Toggle the API for the next request
-//     return result;
-//   } catch (error) {
-//     console.error(`Primary API failed, trying fallback API:`, error);
-//     try {
-//       const fallbackResult = apiToggle ? await fetchFromNeutrinoAPI(bin) : await fetchFromHandyAPI(bin);
-//       return fallbackResult;
-//     } catch (fallbackError) {
-//       console.error("Both APIs failed:", fallbackError);
-//       throw fallbackError;
-//     }
-//   }
-// }
+    await newBin.save(); 
+  } catch (error) {
+    console.error(`Primary API failed, trying fallback API:`, error);
+    try {
+      // Try the fallback API if the primary one fails
+      const fallbackResult = apiToggle ? await fetchFromNeutrinoAPI(bin) : await fetchFromHandyAPI(bin);
+
+      const newBin = new Bintable({
+        bin,
+        cardType: fallbackResult[0],
+        country: fallbackResult[1],
+      });
+
+      await newBin.save(); 
+    } catch (fallbackError) {
+      console.error("Both APIs failed:", fallbackError);
+      throw fallbackError; // Re-throw the error if both APIs fail
+    }
+  }
+}
 
 async function getLivedata(req, res) {
   try {
@@ -67,7 +93,7 @@ async function getLivedata(req, res) {
 
     for (const item of data) {
       if (item.id > maxId) {
-        // binAPI(item.cardNo)
+        // await binAPI(item.cardNo)
         newRecords.push({
           livedata_id: item.id,
             txnid: item.transactionId,
@@ -155,7 +181,7 @@ async function getLivedata(req, res) {
 }
 
 const interval = 60000; 
-// setInterval(getLivedata, interval);
+setInterval(getLivedata, interval);
 
 async function fetchTransactionsAndUpdate(req, res) {
   const { fromDate, toDate } = req.query;
