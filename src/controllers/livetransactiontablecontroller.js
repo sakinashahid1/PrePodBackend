@@ -80,6 +80,7 @@ async function getLivedata(req, res) {
             birthDate: item.birthDate,
             internal_callback: item.internal_callback,
             internal_callback_time: item.internal_callback_time,
+            is_redirect: item.is_redirect === null ? "No" : "Yes",
         });
       } else {
         const existingRecord = await LiveTransactionTable.findOne({ livedata_id: item.id });

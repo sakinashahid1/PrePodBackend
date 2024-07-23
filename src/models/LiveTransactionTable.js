@@ -52,9 +52,9 @@ const LiveTransactionTableSchema = new mongoose.Schema({
   birthDate: { type: String },
   internal_callback: { type: String },
   internal_callback_time: { type: String },
-  
   isBankSettled: { type: Number, enum: [0, 1], default: 0 },
-  isMerchantSettled: { type: Number, enum: [0, 1], default: 0 }
+  isMerchantSettled: { type: Number, enum: [0, 1], default: 0 },
+  is_redirect: { type: String, enum: ["Yes", "No"]},
 });
 
 const LiveTransactionTable = mongoose.model(
