@@ -373,13 +373,46 @@ async function declineReasons(req, res) {
 
 setInterval(declineReasons, 3 * 60 * 60  * 1000);
 
+async function merchantKeys (req, res){
+  const { merchant } = req.query;
+
+  if (!merchant) {
+    return res.status(400).json({ error: "Missing merchant in query parameter" });
+  }
+
+  try {
+    const clientData = await Client.findOne({ company_name: merchant }, 'apiKey apiSecret');
+
+    if (!clientData) {
+      return res.status(404).json({ error: "Merchant not found in Client table" });
+    }
+    const uniqueMIDs = await LiveTransactionTable.distinct('mid', { merchant });
+
+    if (!uniqueMIDs.length) {
+      return res.status(404).json({ error: "No transactions found for the given merchant" });
+    }
+
+    const response = {
+      merchant,
+      apiKey: clientData.apiKey,
+      secretKey: clientData.apiSecret,
+      uniqueMIDs
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching merchant keys:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = { 
   ApprovalRatioChart, 
   approvalRatio, 
-  countriesList,
+  countriesList,  
   midList,
   volumeSum,
   listSettlement,
   getCompanyList,
   getCurrenciesOfCompany,
-  acquirerList, companyCurrency}
+  acquirerList, companyCurrency,merchantKeys}

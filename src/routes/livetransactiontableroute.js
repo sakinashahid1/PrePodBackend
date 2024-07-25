@@ -6,9 +6,8 @@ const {
   fetchTransactionsAndUpdate,
   searchTransactions,
   getLatestTransactions,
-  bankSettled
+  bankSettled,binAPI
 } = require("../controllers/livetransactiontablecontroller");
-
 
 const router = express.Router();
 
@@ -17,5 +16,6 @@ router.get("/searchtxn", searchTransactions);
 router.get("/latest100", getLatestTransactions);
 router.patch('/settledbybank', verifyToken, bankSettled);
 router.get('/updatetransactions', fetchTransactionsAndUpdate);
+router.post('/fetchcountryfrombin', binAPI);
 
 module.exports = router;

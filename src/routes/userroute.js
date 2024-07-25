@@ -5,7 +5,7 @@ const {
   getLoginCredentials,
   getUsers,
   updateUser,
-  userDetails,userShortcut, getUserShortcuts, deleteUserShortcuts
+  userDetails,userShortcut, getUserShortcuts, deleteUserShortcuts,
 } = require("../controllers/userscontroller");
 
 const router = express.Router();

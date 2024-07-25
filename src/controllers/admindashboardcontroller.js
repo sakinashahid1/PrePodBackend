@@ -446,7 +446,6 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
       (currentDate.getMonth() + 1)
     ).slice(-2)}-${("0" + currentDate.getDate()).slice(-2)} 23:59:59`;
 
-
     let pipeline = [
       {
         $match: {
@@ -483,12 +482,19 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
 
     const result = await LiveTransactionTable.aggregate(pipeline);
 
-    const {
-      numTransactions,
-      numSuccessfulTransactions,
-      totalAmountTransactions,
-      totalAmountSuccessfulTransactions,
-    } = result[0];
+    let numTransactions = 0;
+    let numSuccessfulTransactions = 0;
+    let totalAmountTransactions = 0;
+    let totalAmountSuccessfulTransactions = 0;
+
+    if (result.length > 0) {
+      ({
+        numTransactions,
+        numSuccessfulTransactions,
+        totalAmountTransactions,
+        totalAmountSuccessfulTransactions,
+      } = result[0]);
+    }
 
     const sixtyDaysAgo = new Date(thirtyDaysAgo);
     sixtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -537,14 +543,13 @@ const AdminmonthlyTransactionMetrics = async (req, res) => {
         ? previousresult[0].numSuccessfulTransactionsPreviousMonth
         : 0;
 
-
     const growthPercentage =
       numSuccessfulTransactionsPreviousMonth === 0
         ? 100
         : ((numSuccessfulTransactions -
-            numSuccessfulTransactionsPreviousMonth) /
-            numSuccessfulTransactionsPreviousMonth) *
-          100;
+          numSuccessfulTransactionsPreviousMonth) /
+          numSuccessfulTransactionsPreviousMonth) *
+        100;
 
     res.status(200).json({
       numTransactions,

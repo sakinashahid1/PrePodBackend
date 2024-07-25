@@ -10,7 +10,8 @@ const {
     companyCurrency,
     countriesList,
     midList,
-    acquirerList
+  merchantKeys,
+  acquirerList,
 } = require("../controllers/utilitycontroller");
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.get("/listofcountries", verifyToken, countriesList);
 router.get("/listofmids", verifyToken, midList);
 router.get("/acquirerlist", verifyToken, acquirerList);
 router.get("/uniquecurrencies", verifyToken, companyCurrency);
+router.get("/merchantkeys", verifyToken, merchantKeys )
 
 module.exports = router;
