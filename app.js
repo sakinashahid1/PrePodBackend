@@ -30,7 +30,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Welcome! The server is running fine");
+  res.send("Welcome! The server is running");
 });
 
 app.use(bodyParser.json());
