@@ -131,7 +131,7 @@ async function initiateTransaction(req, res) {
     });
     
     await newTransaction.save();
-    const paylinkup_backURL = "http://3.208.112.209/callbackurl";
+    const paylinkup_backURL = "https://paylinkup.online/callbackurl";
     // Perform the remaining operations asynchronously
     const response = await processTransaction(
       txnId,
@@ -246,6 +246,7 @@ async function Bank(dataforBank, apiKey,
       },
       body: JSON.stringify(dataforBank),
     });
+        
     if (!response.ok) {
       throw new Error(`Network response was not ok: ${response.statusText}`);
     }
