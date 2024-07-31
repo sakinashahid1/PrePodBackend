@@ -111,7 +111,7 @@ async function sendBatchRequest(batch) {
       const responses = await Promise.all(
           batch.map(async (bin) => {
               try {
-                
+
                   const response = await fetch(`https://paylinkup.online/v1/bindata`, {
                       method: "POST",
                       headers: {
@@ -125,7 +125,7 @@ async function sendBatchRequest(batch) {
                   }
 
                   const data = await response.json(); // Parse the response data as JSON
-                  console.log(`BIN: ${bin}, Response:`, data.data);
+                  console.log(bin, data.data);
                   return { bin, success: true, data }; // Return data properly
               } catch (error) {
                   console.error(`BIN: ${bin}, Error:`, error.message);
