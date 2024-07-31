@@ -1,4 +1,5 @@
 const bins = [
+  "526099",
   "416598",
   "533317",
   "539132",
@@ -110,7 +111,8 @@ async function sendBatchRequest(batch) {
       const responses = await Promise.all(
           batch.map(async (bin) => {
               try {
-                  const response = await fetch(`http://localhost:3000/v1/bindata`, {
+                
+                  const response = await fetch(`https://paylinkup.online/v1/bindata`, {
                       method: "POST",
                       headers: {
                           "Content-Type": "application/json", // Add content-type header
@@ -145,7 +147,7 @@ async function sendBatchRequest(batch) {
 * @param {number} max - Maximum interval in minutes.
 * @returns {number} Random interval in milliseconds.
 */
-function getRandomInterval(min = 1, max = 10) {
+function getRandomInterval(min = 1, max = 3) {
   return Math.floor(Math.random() * (max - min + 1) + min) * 60 * 1000; // Convert minutes to milliseconds
 }
 
