@@ -85,77 +85,81 @@ function getDefaultValues(bin) {
 
 async function binAPI(req, res) {
   const { bin } = req.body;
-
-  try {
-      let result;
-      if (apiToggle) {
-          result = await fetchFromNeutrinoAPI(bin);
-         
-      } else {
-        result = await fetchFromBinCheck(bin);
-      }
-
-      apiToggle = !apiToggle; // Toggle the API for the next request
-
-      // Ensure consistent capitalization of country name
-      const formattedCountryName = result[1].charAt(0).toUpperCase() + result[1].slice(1).toLowerCase();
-
-      const data = {
-          bin,
-          cardType: result[0],
-          country: formattedCountryName,
-          countryCode: result[2]
-      };
-      res.status(200).json({
-          code: 200,
-          status: "Success",
-          data: data
-      });
-
-  } catch (error) {
-      console.error(`Error processing BIN ${bin}:`, error);
-
-      // Attempt fallback with the opposite API
-      try {
-          let fallbackResult;
-          if (!apiToggle) { // Flip the logic to use the opposite API of the failed one
-            fallbackResult = await fetchFromBinCheck(bin);
-          } else {
-            fallbackResult = await fetchFromNeutrinoAPI(bin);
-          }
-
-          const formattedCountryName = fallbackResult[1].charAt(0).toUpperCase() + fallbackResult[1].slice(1).toLowerCase();
-
-          const data = {
-              bin,
-              cardType: fallbackResult[0],
-              country: formattedCountryName,
-              countryCode: fallbackResult[2]
-          };
+  if (typeof bin === 'string' && bin.length === 6 && /^\d{6}$/.test(bin)){try {
+    let result;
+    if (apiToggle) {
+        result = await fetchFromNeutrinoAPI(bin);
        
-          res.status(200).json({
-              code: 200,
-              status: "Success",
-              data: data
-          });
+    } else {
+      result = await fetchFromBinCheck(bin);
+    }
 
-      } catch (fallbackError) {
-          console.error(`Fallback error processing BIN ${bin}:`, fallbackError);
+    apiToggle = !apiToggle; // Toggle the API for the next request
 
-          result = getDefaultValues(bin);
-          const data = {
-            cardType: result[0],
-            country: result[1].charAt(0).toUpperCase() + result[1].slice(1).toLowerCase(),
-            countryCode: result[2]
+    // Ensure consistent capitalization of country name
+    const formattedCountryName = result[1].charAt(0).toUpperCase() + result[1].slice(1).toLowerCase();
+
+    const data = {
+        bin,
+        cardType: result[0],
+        country: formattedCountryName,
+        countryCode: result[2]
+    };
+    res.status(200).json({
+        code: 200,
+        status: "Success",
+        data: data
+    });
+
+} catch (error) {
+    console.error(`Error processing BIN ${bin}:`, error);
+
+    // Attempt fallback with the opposite API
+    try {
+        let fallbackResult;
+        if (!apiToggle) { // Flip the logic to use the opposite API of the failed one
+          fallbackResult = await fetchFromBinCheck(bin);
+        } else {
+          fallbackResult = await fetchFromNeutrinoAPI(bin);
+        }
+
+        const formattedCountryName = fallbackResult[1].charAt(0).toUpperCase() + fallbackResult[1].slice(1).toLowerCase();
+
+        const data = {
+            bin,
+            cardType: fallbackResult[0],
+            country: formattedCountryName,
+            countryCode: fallbackResult[2]
         };
-    
+     
         res.status(200).json({
             code: 200,
             status: "Success",
             data: data
         });
-      }
-  }
+
+    } catch (fallbackError) {
+        console.error(`Fallback error processing BIN ${bin}:`, fallbackError);
+
+        result = getDefaultValues(bin);
+        const data = {
+          cardType: result[0],
+          country: result[1].charAt(0).toUpperCase() + result[1].slice(1).toLowerCase(),
+          countryCode: result[2]
+      };
+  
+      res.status(200).json({
+          code: 200,
+          status: "Success",
+          data: data
+      });
+    }
+}}else {
+  console.log('Invalid BIN:', bin);
+  // You might want to return an error response here
+  return res.status(400).json({ error: 'Invalid BIN format' });
+}
+  
 }
 
 
