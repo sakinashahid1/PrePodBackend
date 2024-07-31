@@ -157,7 +157,7 @@ async function binAPI(req, res) {
 }}else {
   console.log('Invalid BIN:', bin);
   // You might want to return an error response here
-  return res.status(400).json({ error: 'Invalid BIN format' });
+  return res.status(400).json({ code:400, status:"Bad request", error: 'Invalid BIN format' });
 }
   
 }
