@@ -3,9 +3,8 @@ const { verifyToken } = require("../middlewares/verifyToken");
 const {
   signup,
   getLoginCredentials,
-  getUsers,
-  updateUser,
-  userDetails,userShortcut, getUserShortcuts, deleteUserShortcuts,
+  getUserDetails,
+  updateUser,userShortcut, getUserShortcuts, deleteUserShortcuts,
 } = require("../controllers/userscontroller");
 
 const router = express.Router();
@@ -13,9 +12,8 @@ const router = express.Router();
 // Define user routes
 router.post("/signup", signup);
 router.get("/logincredentials", verifyToken, getLoginCredentials);
-router.get("/signup", verifyToken, getUsers);
+router.get("/getuserdetails", verifyToken, getUserDetails);
 router.patch("/updateUser", verifyToken, updateUser);
-router.get("/userdetails", verifyToken, userDetails);
 router.post("/usershortcut", verifyToken, userShortcut)
 router.get("/getshortcuts", verifyToken, getUserShortcuts);
 router.delete("/deleteshortcut", verifyToken, deleteUserShortcuts);

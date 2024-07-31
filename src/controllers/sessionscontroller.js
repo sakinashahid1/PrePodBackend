@@ -6,6 +6,11 @@ const secretKey = process.env.SECRET_KEY;
 const User = require("../models/User");
 const LoginActivity = require("../models/LoginActivity")
 
+function convertToIST(date) {
+  const istDate = new Date(date.getTime());
+  return istDate.toLocaleString("en-GB", { hour12: false }).replace(/,/g, '');
+}
+
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -20,6 +25,10 @@ async function login(req, res) {
             expiresIn: "1d",
           }
         );
+
+        user.lastLogin = convertToIST(new Date());
+        await user.save();
+
         return res.status(200).json({ message: "Login successful", token, user });
       }
 
@@ -32,6 +41,9 @@ async function login(req, res) {
             expiresIn: "1d",
           }
         );
+
+        user.lastLogin = convertToIST(new Date());
+        await user.save();
 
         return res.status(200).json({ message: "Login successful", token, user });
       }

@@ -16,6 +16,6 @@ router.get("/searchtxn", searchTransactions);
 router.get("/latest100", getLatestTransactions);
 router.patch('/settledbybank', verifyToken, bankSettled);
 router.get('/updatetransactions', fetchTransactionsAndUpdate);
-router.post('/fetchcountryfrombin', binAPI);
+router.post('/v1/bindata', binAPI);
 
 module.exports = router;

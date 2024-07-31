@@ -4,25 +4,27 @@ const Bintable = require("../models/BinTable")
 
 let apiToggle = true;
 
-async function fetchFromAPILayer(bin) {
+async function fetchFromBinCheck(bin) {
   try {
-    console.log(`Fetching BIN ${bin} from APILayer`);
-    const response = await fetch(`https://api.apilayer.com/bincheck/${bin}`, {
-      method: "GET",
+    console.log(`Fetching BIN ${bin} from Bin Check`);
+    const response = await fetch(`https://bin-ip-checker.p.rapidapi.com/?bin=${bin}`, {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "apikey": "HTV7fMFkUr75uzRshmoVJIzop2UA8ftk"
-      }
+        'x-rapidapi-key': '4403aa3601msh220f59b21e3c805p19213fjsn4267c5dcd8f3',
+        'x-rapidapi-host': 'bin-ip-checker.p.rapidapi.com',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({"bin": bin})
     });
 
     if (!response.ok) {
-      throw new Error(`APILayer response was not ok: ${response.statusText}`);
+      throw new Error(`Bin Check response was not ok: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return [data["scheme"], data["country"]];
+    return [data.BIN["scheme"], data.BIN.country["name"]];
   } catch (error) {
-    console.error(`Error fetching BIN ${bin} from APILayer:`, error);
+    console.error(`Error fetching BIN ${bin} from Bin Check:`, error);
     throw error;
   }
 }
@@ -30,21 +32,27 @@ async function fetchFromAPILayer(bin) {
 async function fetchFromNeutrinoAPI(bin) {
   try {
     console.log(`Fetching BIN ${bin} from NeutrinoAPI`);
-    const response = await fetch(`https://neutrinoapi.net/bin-lookup?bin-number=${bin}`, {
-      method: "GET",
+    const response = await fetch(`https://neutrinoapi.net/bin-lookup`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-ID": "anna_garcia",
-        "API-Key": "DSg30BvjVzYpbUeuz3Mkp3g2DH0D4FhpvlFp7YuAhASfABQZ"
-      }
+        "User-ID": "CP",
+        "API-Key": "fecWnLZycWuztVKb3inFb46QiuuBpkdcZWMbXD65IqX1gqX2"
+      },
+      body: JSON.stringify({"bin-number": bin})
     });
 
     if (!response.ok) {
-      throw new Error(`NeutrinoAPI response was not ok: ${response.statusText}`);
+      throw new Error(`Neutrino API response was not ok: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return [data["card-brand"], data["country"]];
+    if(data.valid)
+      {return [data["card-brand"], data.country];}
+    else{
+      throw new Error(`Neutrino API response was invalid`);
+    }
+
   } catch (error) {
     console.error(`Error fetching BIN ${bin} from NeutrinoAPI:`, error);
     throw error;
@@ -52,59 +60,95 @@ async function fetchFromNeutrinoAPI(bin) {
 }
 
 async function binAPI(req, res) {
-  const { binArray } = req.body;
-  const results = [];
+  const { bin } = req.body;
+  const binStartTime = Date.now();
+  console.log(`Timestamp for ${bin} is ${binStartTime}`)
+  let binProcessingTime = 0;
+  let apiName = "";
+  let attemptType = "First Try";
 
-  for (const bin of binArray) {
+  try {
+    let result;
+    if (apiToggle) {
+      apiName = "Bin Check";
+      result = await fetchFromBinCheck(bin);
+    } else {
+      apiName = "NeutrinoAPI";
+      result = await fetchFromNeutrinoAPI(bin);
+    }
+
+    apiToggle = !apiToggle; // Toggle the API for the next request
+
+    // Calculate the time taken for this BIN
+    const binEndTime = Date.now();
+    binProcessingTime = binEndTime - binStartTime;
+    
+    const newBin = new Bintable({
+      bin,
+      timeTaken: binProcessingTime,
+      apiUsed: apiName,
+      attempt: attemptType,
+      cardType: result[0],
+      country: result[1],
+    });
+
+    await newBin.save();
+const data = {
+  cardType: result[0],
+  country: result[1],
+}
+    res.status(200).json({
+      message: "BIN processed successfully",
+      data: data
+    });
+
+  } catch (error) {
+    console.error(`Error processing BIN ${bin}:`, error);
+
+    // Attempt fallback with the opposite API
     try {
-      console.log(`Processing BIN ${bin} using ${apiToggle ? "APILayer" : "NeutrinoAPI"}`);
-      
-      // Fetch data from the selected API based on apiToggle
-      const result = apiToggle ? await fetchFromAPILayer(bin) : await fetchFromNeutrinoAPI(bin);
+      attemptType = "Fallback";
+      let fallbackResult;
+      if (apiToggle) {
+        apiName = "NeutrinoAPI";
+        fallbackResult = await fetchFromNeutrinoAPI(bin);
+      } else {
+        apiName = "Bin Check";
+        fallbackResult = await fetchFromBinCheck(bin);
+      }
+
       apiToggle = !apiToggle; // Toggle the API for the next request
 
+      // Calculate the time taken for this BIN
+      const binEndTime = Date.now();
+      binProcessingTime = binEndTime - binStartTime;
       const newBin = new Bintable({
         bin,
-        cardType: result[0],
-        country: result[1],
+        timeTaken: binProcessingTime,
+        apiUsed: apiName,
+        attempt: attemptType,
+        cardType: fallbackResult[0],
+        country: fallbackResult[1],
+      });
+  
+      const data = { cardType: fallbackResult[0],
+        country: fallbackResult[1],}
+      await newBin.save();
+  
+      res.status(200).json({
+        message: "BIN processed successfully",
+        data:data
       });
 
-      await newBin.save();
-      console.log(`BIN ${bin} processed successfully`);
-    } catch (error) {
-      console.error(`Primary API failed for BIN ${bin}, trying fallback API:`, error);
-      try {
-        // Log fallback attempt
-        console.log(`Attempting fallback API for BIN ${bin} using ${apiToggle ? "NeutrinoAPI" : "APILayer"}`);
-
-        // Try the fallback API if the primary one fails
-        const fallbackResult = apiToggle ? await fetchFromNeutrinoAPI(bin) : await fetchFromAPILayer(bin);
-        apiToggle = !apiToggle; // Toggle the API for the next request
-
-        const newBin = new Bintable({
-          bin,
-          cardType: fallbackResult[0],
-          country: fallbackResult[1],
-        });
-
-        await newBin.save();
-        console.log(`BIN ${bin} processed successfully with fallback API`);
-      } catch (fallbackError) {
-        console.error(`Both APIs failed for BIN ${bin}:`, fallbackError);
-        results.push({ bin, error: `Failed to process BIN ${bin}` }); // Track error for this bin
-      }
+    } catch (fallbackError) {
+      console.error(`Fallback error processing BIN ${bin}:`, fallbackError);
+      res.status(500).json({
+        message: `Failed to process BIN ${bin}`,
+        error: fallbackError.message,
+      });
     }
   }
-
-  // Check for any errors and send the response
-  const failedBins = results.filter(result => result && result.error);
-  if (failedBins.length > 0) {
-    res.status(500).json({ message: "Some BINs failed to process", failedBins });
-  } else {
-    res.status(200).json({ message: "All BINs processed successfully" });
-  }
 }
-
 
 async function getLivedata(req, res) {
   try {
@@ -133,6 +177,7 @@ async function getLivedata(req, res) {
 
     for (const item of data) {
       if (item.id > maxId) {
+        //Apply code for finding bin
         newRecords.push({
           livedata_id: item.id,
             txnid: item.transactionId,

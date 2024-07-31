@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   company_name: {
     type: String,
-    ref: "Client", // Reference to the Client model
+    ref: "Client", 
   },
   shortcuts: [
   {
@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema({
       edited_name: String
 }
   ],
+  lastLogin: { type: String },
+  status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
 });
 
 const User = mongoose.model("User", userSchema);

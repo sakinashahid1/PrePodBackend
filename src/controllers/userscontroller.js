@@ -93,21 +93,44 @@ async function getLoginCredentials(req, res) {
   }
 }
 
-async function getUsers(req, res) {
+async function getUserDetails (req, res) {
   try {
-    const users = await User.find();
-    res.status(200).json(users);
+    const { id } = req.query;
+
+    if (id)
+ {
+      const user = await User.findById(id)
+;
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const userDetails = {
+        name: user.name,
+        email: user.email,
+        mobile_no: user.mobile_no,
+        country: user.country,
+        role: user.role,
+        company_name: user.company_name,
+      };
+
+      return res.status(200).json(userDetails);
+    } else {
+      const users = await User.find();
+      return res.status(200).json(users);
+    }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
 async function updateUser(req, res) {
   try {
-    const { id, name, email, mobile_no, country, company_name } = req.body;
+    const { id, name, email, mobile_no, country, company_name, status } = req.body;
 
-    const existingUser = await User.findById(id);
+    const existingUser = await User.findById(id)
+;
     if (!existingUser) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -116,7 +139,8 @@ async function updateUser(req, res) {
       existingUser.name = name;
     }
 
-    if (email) {
+    if (email)
+ {
       existingUser.email = email;
     }
 
@@ -132,6 +156,10 @@ async function updateUser(req, res) {
       existingUser.company_name = company_name;
     }
 
+    if (status) {
+      existingUser.status = status;
+    }
+
     const updatedUser = await existingUser.save();
 
     res.status(200).json({
@@ -141,30 +169,6 @@ async function updateUser(req, res) {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
-  }
-}
-
-async function userDetails(req, res) {
-  try {
-    const { id } = req.query;
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const UserDetails = {
-      name: user.name,
-      email: user.email,
-      mobile_no: user.mobile_no,
-      country: user.country,
-      role: user.role,
-      company_name: user.company_name,
-    };
-
-    res.json(UserDetails);
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -250,4 +254,4 @@ async function deleteUserShortcuts(req, res) {
   }
 }
 
-module.exports = { signup, getLoginCredentials, getUsers, updateUser, userDetails, userShortcut, getUserShortcuts, deleteUserShortcuts };
+module.exports = { signup, getLoginCredentials, getUserDetails, updateUser, userShortcut, getUserShortcuts, deleteUserShortcuts };
