@@ -55,6 +55,8 @@ const LiveTransactionTableSchema = new mongoose.Schema({
   isBankSettled: { type: Number, enum: [0, 1], default: 0 },
   isMerchantSettled: { type: Number, enum: [0, 1], default: 0 },
   is_redirect: { type: String, enum: ["Yes", "No"]},
+  our_country: { type: String },
+  our_cardType: { type: String },
 });
 
 const LiveTransactionTable = mongoose.model(

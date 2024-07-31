@@ -105,6 +105,7 @@ async function binAPI(req, res) {
         country: formattedCountryName,
         countryCode: result[2]
     };
+    console.log(data)
     res.status(200).json({
         code: 200,
         status: "Success",
@@ -131,7 +132,7 @@ async function binAPI(req, res) {
             country: formattedCountryName,
             countryCode: fallbackResult[2]
         };
-     
+        console.log(data)
         res.status(200).json({
             code: 200,
             status: "Success",
@@ -147,7 +148,7 @@ async function binAPI(req, res) {
           country: result[1].charAt(0).toUpperCase() + result[1].slice(1).toLowerCase(),
           countryCode: result[2]
       };
-  
+      console.log(data)
       res.status(200).json({
           code: 200,
           status: "Success",
@@ -190,7 +191,7 @@ async function getLivedata(req, res) {
 
     for (const item of data) {
       if (item.id > maxId) {
-        //Apply code for finding bin
+
         newRecords.push({
           livedata_id: item.id,
             txnid: item.transactionId,
