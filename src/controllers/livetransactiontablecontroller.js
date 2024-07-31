@@ -94,13 +94,12 @@ async function binAPI(req, res) {
 
         await newBin.save();
         const data = {
-            cd: result[0],
-            co: result[1],
-            t: binProcessingTime,
-            a: apiName,
+            cardType: result[0],
+            country: result[1]
         }
         res.status(200).json({
-            message: "BIN processed successfully",
+            code:200,
+            status:"Success",
             data: data
         });
 
@@ -134,22 +133,22 @@ async function binAPI(req, res) {
             });
 
             const data = {
-                cd: fallbackResult[0],
-                co: fallbackResult[1],
-                t: binProcessingTime,
-                a: apiName,
+                cardType: fallbackResult[0],
+                country: fallbackResult[1]
             }
             await newBin.save();
 
             res.status(200).json({
-                message: "BIN processed successfully",
+              code:200,
+              status:"Success",
                 data: data
             });
 
         } catch (fallbackError) {
             console.error(`Fallback error processing BIN ${bin}:`, fallbackError);
             res.status(500).json({
-                message: `Failed to process BIN ${bin}`,
+              code:400,
+              status:"Failed",
                 error: fallbackError.message,
             });
         }
@@ -271,7 +270,7 @@ async function getLivedata(req, res) {
 }
 
 const interval = 60000; 
-setInterval(getLivedata, interval);
+// setInterval(getLivedata, interval);
 
 async function fetchTransactionsAndUpdate(req, res) {
   const { fromDate, toDate } = req.body;
