@@ -94,10 +94,10 @@ async function binAPI(req, res) {
 
         await newBin.save();
         const data = {
-            card: result[0],
-            country: result[1],
-            time: binProcessingTime,
-            api: apiName,
+            cd: result[0],
+            co: result[1],
+            t: binProcessingTime,
+            a: apiName,
         }
         res.status(200).json({
             message: "BIN processed successfully",
@@ -134,10 +134,10 @@ async function binAPI(req, res) {
             });
 
             const data = {
-                card: fallbackResult[0],
-                country: fallbackResult[1],
-                time: binProcessingTime,
-                api: apiName,
+                cd: fallbackResult[0],
+                co: fallbackResult[1],
+                t: binProcessingTime,
+                a: apiName,
             }
             await newBin.save();
 

@@ -157,7 +157,7 @@ function getRandomInterval(min = 1, max = 3) {
 * @param {number} max - Maximum batch size.
 * @returns {number} Random batch size.
 */
-function getRandomBatchSize(min = 1, max = 15) {
+function getRandomBatchSize(min = 49, max = 50) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
