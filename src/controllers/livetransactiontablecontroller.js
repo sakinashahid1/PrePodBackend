@@ -203,161 +203,30 @@ async function getLivedata(req, res) {
 
     const newRecords = [];
     const updatedRecords = [];
+    const seenTransactions = new Set();
 
     for (const item of data) {
-      if (item.id > maxId) {
-        const bin = item.cardNo.slice(0, 6);
+      const uniqueKey = `${item.transactionId}-${item.mtxnID}-${item.status}`;
+
+      if (!seenTransactions.has(uniqueKey)) {
+        seenTransactions.add(uniqueKey);
+        if (item.id > maxId) {
+          const bin = item.cardNo.slice(0, 6);
         const response = await fetch(`https://paylinkup.online/v1/bindata`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json", // Add content-type header
+            "Content-Type": "application/json", 
           },
           body: JSON.stringify({ bin: bin }),
         });
         const binResult = await response.json();
         our_country = binResult.data.country;
         our_cardType = binResult.data.cardType;
-
-        newRecords.push({
-          livedata_id: item.id,
-          txnid: item.transactionId,
-          merchantTxnId: item.mtxnID,
-          merchant:
-            item["merchant_name"].trim().charAt(0).toUpperCase() +
-            item["merchant_name"].slice(1).toLowerCase(),
-          amount: item.amount,
-          fee: item.fee,
-          merchant_fee: item.merchant_fee,
-          backUrl: item.backUrl,
-          merchant_id: item.merchant_id,
-          transactiondate: item.transaction_date,
-          statusBKP: item.statusBKP,
-          Status: item.status,
-          isSettled: item.isSettled,
-          settledDate: item.settledDate,
-          settledTxnId: item.settledTxnId,
-          settledAmount: item.settledAmount,
-          router: item.router,
-          description: item.description,
-          email: item.email,
-          currency: item.currency,
-          env: item.env,
-          mode: item.mode,
-          paymentgateway: item.payment_mode,
-          payment_id: item.payment_id,
-          pg_order_key: item.order_key,
-          message: item.message,
-          webhook_id: item.webhook_id,
-          requested_phone: item.requested_phone,
-          orderNo: item.requested_orderNumber,
-          cname: item.requested_name,
-          tempUpdated: item.tempUpdated,
-          is_admin_settled: item.is_admin_settled,
-          admin_settled_date: item.admin_settled_date,
-          admin_settled_amount: item.admin_settled_amount,
-          cardtype: item.cardType,
-          requestMode: item.requestMode,
-          cardnumber: item.cardNo,
-          cardExpire: item.cardExpire,
-          cardCVC: item.cardCVC,
-          pdate: item.pdate,
-          country: item.country,
-          dels: item.dels,
-          web_url: item.web_url,
-          mid: item.mid,
-          from_temp: item.from_temp,
-          accountHolder: item.accountHolder,
-          accountBankCode: item.accountBankCode,
-          accountNumber: item.accountNumber,
-          birthDate: item.birthDate,
-          internal_callback: item.internal_callback,
-          internal_callback_time: item.internal_callback_time,
-          is_redirect: item.is_redirect === null ? "No" : "Yes",
-          our_country: our_country || "",
-          our_cardType: our_cardType || "",
-        });
-      } else {
-        const existingRecord = await LiveTransactionTable.findOne({
-          livedata_id: item.id,
-        });
-        if (existingRecord && existingRecord.Status !== item.status) {
-          updatedRecords.push({
-            updateOne: {
-              filter: { livedata_id: item.id },
-              update: { Status: item.status },
-            },
-          });
-        }
-      }
-    }
-
-    if (newRecords.length > 0) {
-      await LiveTransactionTable.insertMany(newRecords);
-    }
-
-    if (updatedRecords.length > 0) {
-      await LiveTransactionTable.bulkWrite(updatedRecords);
-    }
-
-    if (req && res) {
-      res.json({ newRecords, updatedRecords });
-    }
-  } catch (error) {
-    console.error("Error fetching or processing data:", error);
-    if (req && res) {
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-}
-
-const interval = 60000;
-// setInterval(getLivedata, interval);
-
-async function fetchTransactionsAndUpdate(req, res) {
-  const { fromDate, toDate } = req.body;
-
-  if (!fromDate || !toDate) {
-    return res
-      .status(400)
-      .json({ error: "Missing fromDate or toDate in request body" });
-  }
-
-  try {
-    const apiUrl = `https://centpays.com/apidoc/get_all_transaction?from=${fromDate}&to=${toDate}`;
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const contentType = response.headers.get("Content-Type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Expected JSON response");
-    }
-
-    const apiData = await response.json();
-    const data = apiData.data;
-
-    const from = fromDate;
-    const to = toDate;
-
-    const deleteResult = await LiveTransactionTable.deleteMany({
-      transactiondate: {
-        $gte: from,
-        $lte: to,
-      },
-    });
-
-    const bulkOps = data.map((item) => ({
-      updateOne: {
-        filter: { livedata_id: item.id },
-        update: {
-          $set: {
+          newRecords.push({
+            livedata_id: item.id,
             txnid: item.transactionId,
             merchantTxnId: item.mtxnID,
-            merchant:
-              item["merchant_name"].trim().charAt(0).toUpperCase() +
-              item["merchant_name"].slice(1).toLowerCase(),
+            merchant: item["merchant_name"].trim().charAt(0).toUpperCase() + item["merchant_name"].slice(1).toLowerCase(),
             amount: item.amount,
             fee: item.fee,
             merchant_fee: item.merchant_fee,
@@ -406,22 +275,183 @@ async function fetchTransactionsAndUpdate(req, res) {
             internal_callback: item.internal_callback,
             internal_callback_time: item.internal_callback_time,
             is_redirect: item.is_redirect === null ? "No" : "Yes",
-          },
+            our_country: our_country || "",
+          our_cardType: our_cardType || "",
+          });
+        } else {
+          const existingRecord = await LiveTransactionTable.findOne({ livedata_id: item.id });
+          if (existingRecord && existingRecord.Status !== item.status) {
+            updatedRecords.push({
+              updateOne: {
+                filter: { livedata_id: item.id },
+                update: { Status: item.status },
+              },
+            });
+          }
+        }
+      }
+    }
+
+    if (newRecords.length > 0) {
+      await LiveTransactionTable.insertMany(newRecords);
+    }
+
+    if (updatedRecords.length > 0) {
+      await LiveTransactionTable.bulkWrite(updatedRecords);
+    }
+
+    if (req && res) {
+      res.json({ newRecords, updatedRecords });
+    }
+  } catch (error) {
+    console.error("Error fetching or processing data:", error);
+    if (req && res) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+}
+
+const interval = 60000;
+// setInterval(getLivedata, interval);
+
+async function fetchTransactionsAndUpdate(req, res) {
+  const { fromDate, toDate } = req.body;
+
+  if (!fromDate || !toDate) {
+    return res.status(400).json({ error: "Missing fromDate or toDate in request body" });
+  }
+
+  try {
+    const apiUrl = `https://centpays.com/apidoc/get_all_transaction?from=${fromDate}&to=${toDate}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("Content-Type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Expected JSON response");
+    }
+
+    const apiData = await response.json();
+    const data = apiData.data;
+
+    const from = fromDate;
+    const to = toDate;
+
+    const deleteResult = await LiveTransactionTable.deleteMany({
+      transactiondate: {
+        $gte: from,
+        $lte: to
+      }
+    });
+
+    const uniqueTransactions = [];
+    const seenTransactions = new Set();
+
+    data.forEach((item) => {
+      const uniqueKey = `${item.transactionId}-${item.mtxnID}-${item.status}`;
+      
+      if (!seenTransactions.has(uniqueKey)) {
+        seenTransactions.add(uniqueKey);
+        uniqueTransactions.push(item);
+      }
+    });
+
+    const bulkOps = uniqueTransactions.map((item) => ({
+      updateOne: {
+        filter: { livedata_id: item.id },
+        update: {
+          $set: {
+            txnid: item.transactionId,
+            merchantTxnId: item.mtxnID,
+            merchant: item["merchant_name"].trim().charAt(0).toUpperCase() + item["merchant_name"].slice(1).toLowerCase(),
+            amount: item.amount,
+            fee: item.fee,
+            merchant_fee: item.merchant_fee,
+            backUrl: item.backUrl,
+            merchant_id: item.merchant_id,
+            transactiondate: item.transaction_date,
+            statusBKP: item.statusBKP,
+            Status: item.status,
+            isSettled: item.isSettled,
+            settledDate: item.settledDate,
+            settledTxnId: item.settledTxnId,
+            settledAmount: item.settledAmount,
+            router: item.router,
+            description: item.description,
+            email: item.email,
+            currency: item.currency,
+            env: item.env,
+            mode: item.mode,
+            paymentgateway: item.payment_mode,
+            payment_id: item.payment_id,
+            pg_order_key: item.order_key,
+            message: item.message,
+            webhook_id: item.webhook_id,
+            requested_phone: item.requested_phone,
+            orderNo: item.requested_orderNumber,
+            cname: item.requested_name,
+            tempUpdated: item.tempUpdated,
+            is_admin_settled: item.is_admin_settled,
+            admin_settled_date: item.admin_settled_date,
+            admin_settled_amount: item.admin_settled_amount,
+            cardtype: item.cardType,
+            requestMode: item.requestMode,
+            cardnumber: item.cardNo,
+            cardExpire: item.cardExpire,
+            cardCVC: item.cardCVC,
+            pdate: item.pdate,
+            country: item.country,
+            dels: item.dels,
+            web_url: item.web_url,
+            mid: item.mid,
+            from_temp: item.from_temp,
+            accountHolder: item.accountHolder,
+            accountBankCode: item.accountBankCode,
+            accountNumber: item.accountNumber,
+            birthDate: item.birthDate,
+            internal_callback: item.internal_callback,
+            internal_callback_time: item.internal_callback_time,
+            is_redirect: item.is_redirect === null ? "No" : "Yes",
+          }
         },
-        upsert: true,
-      },
+        upsert: true
+      }
     }));
 
     const bulkWriteResult = await LiveTransactionTable.bulkWrite(bulkOps);
 
-    res.json({
-      success: true,
+    res.json({ 
+      success: true, 
       message: "Transactions updated successfully",
       deletedCount: deleteResult.deletedCount,
-      insertedCount: bulkWriteResult.upsertedCount,
+      insertedCount: bulkWriteResult.upsertedCount
     });
   } catch (error) {
     console.error("Error fetching or processing data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+async function load7daysData(req, res) {
+  try {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 6);
+
+    const formattedStartDate = `${startDate.getFullYear()}-${("0" + (startDate.getMonth() + 1)).slice(-2)}-${("0" + startDate.getDate()).slice(-2)} 00:00:00`;
+    const formattedEndDate = `${endDate.getFullYear()}-${("0" + (endDate.getMonth() + 1)).slice(-2)}-${("0" + endDate.getDate()).slice(-2)} 23:59:59`;
+
+    console.table([formattedStartDate, formattedEndDate]);
+
+    req.body.fromDate = formattedStartDate;
+    req.body.toDate = formattedEndDate;
+
+    await fetchTransactionsAndUpdate(req, res);
+  } catch (error) {
+    console.error("Error in load7daysData:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }
@@ -516,4 +546,5 @@ module.exports = {
   getLatestTransactions,
   bankSettled,
   binAPI,
+  load7daysData
 };
